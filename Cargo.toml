@@ -1,0 +1,22 @@
+[package]
+name = "rblender"
+version = "0.1.0"
+edition = "2021"
+description = "Headless Blender on remote sandboxes (instabox, Daytona, SSH) with zero setup: run scripts, texture, rig, animate, render, export"
+license = "MIT"
+repository = "https://github.com/igun997/rblender"
+readme = "README.md"
+keywords = ["blender", "3d", "remote", "rcargo", "headless"]
+categories = ["command-line-utilities", "graphics"]
+exclude = ["proof/", "out/", "target/"]
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "rblender"
+path = "src/main.rs"
+
+[dependencies]
+png = "0.17"
+serde_json = "1"

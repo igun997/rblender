@@ -1,0 +1,15 @@
+# rcargo project settings. Remote machines ("instances") are configured per user:
+#   rcargo instances            # list them
+#   rcargo instances add ...    # add one
+#
+# Pin this project to one instance (otherwise your default is used):
+# instance = "main"
+
+[sync]
+# Extra things that must never be uploaded (gitignore syntax). .gitignore is already honoured.
+exclude = []
+
+[remote]
+# Environment variables copied from YOUR shell to the remote at run time, never written to disk.
+# Needed for private git dependencies or private registries, e.g. ["GH_TOKEN"].
+forward_env = []

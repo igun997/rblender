@@ -1,0 +1,28 @@
+{
+  "objects": 77,
+  "vertices": 33461,
+  "triangles": 64056,
+  "materials": 25,
+  "images": 11,
+  "bones": 123,
+  "meshes_bound": 77,
+  "unweighted_vertices": 0,
+  "fk_vs_blender_max_error_m": 0.0,
+  "salute_hand_to_brow_target_m": 0.0,
+  "animation": {
+    "frames": 121,
+    "animated_bones": 120,
+    "fcurves": 452
+  },
+  "seconds": {
+    "model": 0.5,
+    "rig": 0.6,
+    "anim": 0.8,
+    "export": 2.9,
+    "hero": 31.3,
+    "face": 45.5,
+    "stills": 129.7,
+    "wire": 130.4,
+    "video": 727.0
+  }
+}

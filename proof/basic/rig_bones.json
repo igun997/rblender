@@ -1,0 +1,44 @@
+{
+  "bones": [
+    "root",
+    "spine",
+    "head",
+    "upper_arm.L",
+    "lower_arm.L",
+    "upper_arm.R",
+    "lower_arm.R",
+    "thigh.L",
+    "shin.L",
+    "thigh.R",
+    "shin.R"
+  ],
+  "vertex_groups": [
+    "root",
+    "spine",
+    "head",
+    "upper_arm.L",
+    "lower_arm.L",
+    "upper_arm.R",
+    "lower_arm.R",
+    "thigh.L",
+    "shin.L",
+    "thigh.R",
+    "shin.R"
+  ],
+  "vertices": 6538,
+  "unweighted_vertices": 0,
+  "weighting": "ARMATURE_AUTO",
+  "keyframed_bones": [
+    "head",
+    "lower_arm.L",
+    "lower_arm.R",
+    "root",
+    "shin.L",
+    "shin.R",
+    "spine",
+    "thigh.L",
+    "thigh.R",
+    "upper_arm.L",
+    "upper_arm.R"
+  ]
+}

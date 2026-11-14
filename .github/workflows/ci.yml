@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: unit tests
+        run: cargo test --all-targets
+      - name: CLI smoke test
+        run: |
+          cargo build --release
+          ./target/release/rblender --version
+          ./target/release/rblender help | grep -q "headless Blender"
+          mkdir -p /tmp/empty
+          if ./target/release/rblender verify /tmp/empty; then echo "verify must fail on an empty dir"; exit 1; fi
+
+  # Real Blender, real artifacts: install Blender with the same script rblender deploys to the
+  # remote machine, run the bundled examples plus the Vestia Zeta character, then prove the outputs.
+  blender-e2e:
+    name: blender e2e (install, demo, rig, Zeta)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: build rblender
+        run: cargo build --release
+      - name: install Blender (same script the remote bootstrap uses)
+        run: bash scripts/install-blender.sh
+      - name: run examples
+        run: |
+          run_blender() {
+            out="$1"; shift
+            RBLENDER_OUT="$PWD/out/$out" "$HOME/blender/blender" -b --factory-startup --python-exit-code 1 \
+              --python-expr "import sys; sys.path[:0]=['$PWD/py','$PWD']" "$@"
+          }
+          run_blender demo -P py/demo.py -- --quick
+          run_blender rig -P py/rig.py -- --quick
+          run_blender zeta -P characters/vestia_zeta.py -- --quick
+      - name: verify artifacts
+        run: |
+          ./target/release/rblender verify out/demo --anim
+          ./target/release/rblender verify out/rig --skin --anim
+          ./target/release/rblender verify out/zeta --skin --anim
+          cat out/zeta/zeta_stats.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blender-e2e-output
+          path: |
+            out/demo
+            out/rig
+            out/zeta/*.png
+            out/zeta/*.glb
+            out/zeta/zeta_stats.json
