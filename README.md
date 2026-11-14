@@ -229,6 +229,8 @@ Honest limits of this model: it is built from lofted primitives and decals, so t
 
 [`ci.yml`](.github/workflows/ci.yml) runs fmt, clippy (`-D warnings`) and 13 unit tests on Linux and macOS, then a **blender e2e** job that installs real Blender with the same script rblender deploys remotely, runs `py/demo.py`, `py/rig.py` and the Zeta character (`--quick`), and fails unless `rblender verify` passes (`--skin --anim`). The outputs are uploaded as a build artifact. [`release.yml`](.github/workflows/release.yml) builds binaries for Linux (x86_64, aarch64) and macOS (arm64, x86_64) on every `v*` tag and publishes the release with checksums.
 
+First green run ([run 43640171094](https://github.com/igun997/rblender/actions/runs/43640171094)): `test (ubuntu-latest)` and `test (macos-latest)` pass, and `blender e2e` passed on a stock GitHub runner with real Blender 4.5.16: `rblender verify` reported 9/9 (demo), 7/7 (rig) and all Zeta artifacts OK, with the same stats as above (77 meshes, 64,056 triangles, 123 bones, 0 unweighted vertices, glb with 1 skin / 123 joints / 1 animation).
+
 ## How it works
 
 1. **Transport.** rcargo picks the instance, syncs the project (changed files only) and opens one SSH session. Your code never goes through GitHub.
