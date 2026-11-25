@@ -55,6 +55,18 @@ PALETTE_DEFS = {
                      lights=dict(Key=(1.0, 0.90, 0.80), Rim=(1.0, 0.45, 0.20)),
                      grade=dict(lift=(0.0, 0.0, 0.0), gamma=(1.0, 0.98, 0.95), gain=(1.12, 1.0, 0.92), saturation=1.10, contrast=0.15)),
 }
+DETAIL_PAL = {
+    "ember": dict(mouth=(0.35, 0.09, 0.07), tooth=(0.90, 0.85, 0.70), eye_glow=1.4,
+                  breath=dict(ramp=[(0.15, 0.01, 0.0), (1.0, 0.22, 0.02), (1.0, 0.65, 0.12), (1.0, 0.95, 0.70)], density=18.0, emission=7.0, light=(1.0, 0.45, 0.12))),
+    "emerald": dict(mouth=(0.34, 0.12, 0.11), tooth=(0.85, 0.82, 0.65), eye_glow=1.2,
+                    breath=dict(ramp=[(0.02, 0.08, 0.0), (0.15, 0.60, 0.05), (0.55, 0.95, 0.20), (0.90, 1.0, 0.60)], density=14.0, emission=4.0, light=(0.5, 1.0, 0.2))),
+    "frost": dict(mouth=(0.55, 0.30, 0.40), tooth=(0.95, 0.98, 1.0), eye_glow=1.6,
+                  breath=dict(ramp=[(0.10, 0.25, 0.40), (0.40, 0.75, 1.0), (0.80, 0.95, 1.0), (1.0, 1.0, 1.0)], density=12.0, emission=3.0, light=(0.5, 0.8, 1.0))),
+    "obsidian": dict(mouth=(0.20, 0.03, 0.035), tooth=(0.20, 0.18, 0.16), eye_glow=1.6,
+                     breath=dict(ramp=[(0.10, 0.0, 0.0), (0.90, 0.12, 0.0), (1.0, 0.50, 0.05), (1.0, 0.85, 0.40)], density=22.0, emission=9.0, light=(1.0, 0.35, 0.05))),
+}
+for _k, _v in DETAIL_PAL.items():
+    PALETTE_DEFS[_k].update(_v)
 NORENDER = "--no-render" in opts
 S = 0.25          # metres per glb unit (puts the head at about 0.6 m)
 PPM = 700         # silhouette pixels per metre
@@ -216,19 +228,25 @@ U = prec.coords(t_up)
 ST_SKULL = slab_stations(np.column_stack([U[:, 0], U[:, 1], U[:, 2]]), 60, HALF_SLAB)
 skull = prec.loft_half("Skull", ST_SKULL, 110, 56, clay)
 
-# --- jaw: its own frame (the target jaw is open), stations along the principal axis
-J = prec.coords(t_jaw)
-cj = J[:, 1:].mean(0)
-ev, evec = np.linalg.eigh(np.cov((J[:, 1:] - cj).T))
-ut = evec[:, 1] * (1 if evec[0, 1] > 0 else -1)          # unit (y, z), pointing from the tip towards the hinge
-nv = np.array([-ut[1], ut[0]])                            # perpendicular, z component = ut_y > 0
-s_all = (J[:, 1:] - cj) @ ut
-b_all = (J[:, 1:] - cj) @ nv
-origin_j = cj + s_all.min() * ut
-Jl = np.column_stack([J[:, 0], s_all - s_all.min(), b_all])
-ST_JAW = slab_stations(Jl, 44, HALF_SLAB)
-jaw = prec.loft_half("Jaw", ST_JAW, 90, 48, clay)
-to_frame(jaw, origin_j, ut, nv)
+def frame_loft(name, target, n_st, rings, around, half_slab):
+    """Loft along the principal axis of `target` in its own (y, z) frame, for parts that do not run along y (the open
+    jaw, the tongue). Returns the object, its stations and the frame (origin_yz, axis_yz, normal_yz)."""
+    Pt = prec.coords(target)
+    cj = Pt[:, 1:].mean(0)
+    _ev, evec = np.linalg.eigh(np.cov((Pt[:, 1:] - cj).T))
+    ax = evec[:, 1] * (1 if evec[0, 1] > 0 else -1)          # unit (y, z), pointing from the tip towards the hinge
+    nrm = np.array([-ax[1], ax[0]])                            # perpendicular, z component = ax_y > 0
+    s_all = (Pt[:, 1:] - cj) @ ax
+    b_all = (Pt[:, 1:] - cj) @ nrm
+    origin = cj + s_all.min() * ax
+    st = slab_stations(np.column_stack([Pt[:, 0], s_all - s_all.min(), b_all]), n_st, half_slab)
+    ob = prec.loft_half(name, st, rings, around, clay)
+    to_frame(ob, origin, ax, nrm)
+    return ob, st, (origin, ax, nrm)
+
+
+# --- jaw: its own frame (the target jaw is open)
+jaw, ST_JAW, (origin_j, ut, nv) = frame_loft("Jaw", t_jaw, 44, 90, 48, HALF_SLAB)
 LOG["jaw_axis_deg_below_horizontal"] = float(math.degrees(math.atan2(-ut[1], ut[0])))
 
 
@@ -460,6 +478,171 @@ print(f"SPIKES built: {len(SPIKES)}", flush=True)
 sc3, vm3 = scores_row("spikes")
 lap("spikes")
 
+# ------------------------------------------------------------------------------------------------ details: teeth, tongue, eyes, mouth
+DETAILS = {}
+
+
+def mesh_components(obj):
+    n = len(obj.data.vertices)
+    Ed = np.empty(len(obj.data.edges) * 2, np.int32)
+    obj.data.edges.foreach_get("vertices", Ed)
+    parent = np.arange(n)
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+    for a, b in Ed.reshape(-1, 2):
+        ra, rb_ = find(a), find(b)
+        if ra != rb_:
+            parent[ra] = rb_
+    roots = np.array([find(i) for i in range(n)])
+    return [np.nonzero(roots == r)[0] for r in np.unique(roots)]
+
+
+tooth_mat = prec.simple_material("Tooth", (0.85, 0.80, 0.65), rough=0.35, spec=0.6)
+TEETH_LAB = D["teeth_L"]
+TP = prec.coords(t_teeth)
+ROW_TREE = {"upper": prec.bvh_of(skull), "jaw": prec.bvh_of(jaw)}
+MAX_TOOTH_VERTS = 150  # a bigger component is several fused teeth; a typical tooth has about 49 vertices
+
+
+def kmeans_split(Pt, k, iters=20):
+    """Split a point cloud into k groups (farthest-point start, Lloyd iterations)."""
+    C = [Pt[0]]
+    for _ in range(k - 1):
+        C.append(Pt[np.min([np.linalg.norm(Pt - c, axis=1) for c in C], axis=0).argmax()])
+    C = np.array(C)
+    for _ in range(iters):
+        lab = np.linalg.norm(Pt[:, None] - C[None], axis=2).argmin(1)
+        C = np.array([Pt[lab == i].mean(0) if (lab == i).any() else C[i] for i in range(k)])
+    return [np.nonzero(lab == i)[0] for i in range(k)]
+
+
+TOOTH_GROUPS, N_FUSED = [], 0  # (vertex indices, skin row)
+for _idx in mesh_components(t_teeth):
+    _row = LAB[int(np.bincount(TEETH_LAB[_idx]).argmax())]
+    if len(_idx) > MAX_TOOTH_VERTS:
+        N_FUSED += 1
+        for _part in kmeans_split(TP[_idx], max(2, int(round(len(_idx) / 49)))):
+            if len(_part) >= 8:
+                TOOTH_GROUPS.append((_idx[_part], _row))
+    elif len(_idx) >= 8:
+        TOOTH_GROUPS.append((_idx, _row))
+
+
+def build_teeth(row):
+    """One tapered, slightly curved tooth per connected component of the target teeth with that skin label, measured
+    by a 4-point principal curve; the root is the end nearest the model. x>0 teeth are built and mirrored."""
+    bm_side, bm_mid = bmesh.new(), bmesh.new()
+    n_side = n_mid = skipped = 0
+    roots = []
+    for idx, row_ in TOOTH_GROUPS:
+        if row_ != row:
+            continue
+        Pt = TP[idx]
+        cx = float(Pt[:, 0].mean())
+        if cx < -0.004:
+            continue  # the x>0 twin is built and mirrored
+        C, R = principal_curve(Pt, K=4, iters=6)
+        near = lambda p: prec.nearest_points(p[None], ROW_TREE[row])[1][0]
+        if near(C[-1]) < near(C[0]):
+            C, R = C[::-1], R[::-1]
+        R = np.minimum.accumulate(np.minimum(np.maximum(R, 0.0012), 0.006))  # a measured group can span several teeth: cap the radius
+        R[-1] *= 0.2
+        t0 = C[1] - C[0]
+        t0 /= np.linalg.norm(t0)
+        roots.append(C[0].copy())
+        C = np.vstack([C[0] - t0 * R[0] * 1.2, C])
+        R = np.concatenate([[R[0]], R])
+        mid = abs(cx) <= 0.004
+        prec.tube_bm(bm_mid if mid else bm_side, [tuple(p) for p in C], list(R), n=8, cap_start=True, cap_end=True)
+        n_mid += int(mid)
+        n_side += int(not mid)
+    objs = []
+    ob = prec.new_object(f"Teeth_{row}", bm_side, [tooth_mat])
+    prec.add_mirror(ob, merge=False, clip=False, mirror_u=False)
+    objs.append(ob)
+    if n_mid:
+        objs.append(prec.new_object(f"Teeth_{row}_mid", bm_mid, [tooth_mat]))
+    else:
+        bm_mid.free()
+    return objs, 2 * n_side + n_mid, skipped, np.array(roots)
+
+
+t_up_objs, n_up, skip_up, roots_up = build_teeth("upper")
+t_lo_objs, n_lo, skip_lo, roots_lo = build_teeth("jaw")
+TEETH = t_up_objs + t_lo_objs
+usable = {r: sum(1 for _i, rr in TOOTH_GROUPS if rr == r) for r in ("upper", "jaw")}
+d_mt = union_dist(np.vstack([prec.sample_surface(o, 1200, 5) for o in TEETH]), [t_teeth])
+d_tm = union_dist(prec.sample_surface(t_teeth, 4000, 6), TEETH)
+rep.count("teeth", "upper teeth built (target components 8..150 vertices)", n_up, usable["upper"])
+rep.count("teeth", "lower teeth built (target components 8..150 vertices)", n_lo, usable["jaw"])
+rep.at_most("teeth", "model -> target mean (0.2% of L)", float(d_mt.mean()), 0.002 * LEN * 1000)
+rep.at_most("teeth", "target -> model mean (0.2% of L)", float(d_tm.mean()), 0.002 * LEN * 1000)
+DETAILS["teeth"] = dict(upper=n_up, lower=n_lo, fused_components_split=N_FUSED, accuracy_mean_mm=float(d_mt.mean()) * 1000, completeness_mean_mm=float(d_tm.mean()) * 1000)
+print("TEETH", json.dumps(DETAILS["teeth"]), flush=True)
+ALL_ROOTS = np.vstack([roots_up, roots_lo])
+MOUTH_C = np.array([0.0, float(ALL_ROOTS[:, 1].mean()), float(ALL_ROOTS[:, 2].mean())])
+MOUTH_Y_MAX = float(ALL_ROOTS[:, 1].max()) + 0.05
+
+# --- tongue: a frame loft like the jaw
+tongue, ST_TONGUE, _tf = frame_loft("Tongue", t_tongue, 18, 60, 32, 0.018)
+d_t = union_dist(prec.sample_surface(tongue, 1500, 5), [t_tongue])
+DETAILS["tongue"] = dict(accuracy_mean_mm=float(d_t.mean()) * 1000)
+
+# --- mouth: faces that look into the mouth get material slot 1 (flesh)
+for ob_, up_ in ((skull, False), (jaw, True)):
+    ob_.data.update()
+    for p_ in ob_.data.polygons:
+        nz_ = p_.normal.z
+        if (nz_ > 0.55 if up_ else nz_ < -0.55) and p_.center.y < MOUTH_Y_MAX:
+            p_.material_index = 1
+
+# --- eyes: placed on the fitted skin (ray onto the skull), protruding by a quarter of the radius, with slit lids
+sk_tree = prec.bvh_of(skull)
+eye.hide_render = True
+eye.hide_viewport = True
+EYES, LIDS, EYE_FRAMES = [], [], []
+for sx_ in (1.0, -1.0):
+    c_ = np.array([sx_ * ec[0], ec[1], ec[2]])
+    guess = np.array([sx_ * 0.9, -0.35, 0.25])
+    guess /= np.linalg.norm(guess)
+    loc_, nor_, _d = prec.ray(sk_tree, V(c_ + guess * 0.15), V(-guess), 0.4)
+    if loc_ is None:
+        g_, surf_ = guess, c_
+    else:
+        g_ = np.array(nor_)
+        g_ = g_ if g_ @ guess > 0 else -g_
+        g_ /= np.linalg.norm(g_)
+        surf_ = np.array(loc_)
+    centre_ = surf_ + g_ * (er * 0.25)
+    h_ = np.cross(g_, [0.0, 0.0, 1.0])
+    h_ /= np.linalg.norm(h_)
+    u_ = np.cross(h_, g_)
+    bm_e = bmesh.new()
+    bmesh.ops.create_uvsphere(bm_e, u_segments=40, v_segments=24, radius=er)
+    ball = prec.new_object("EyeR" if sx_ > 0 else "EyeL", bm_e, [])
+    ball.location = tuple(centre_)
+    bm_l = bmesh.new()
+    r_l = 1.22 * er
+    bmesh.ops.create_uvsphere(bm_l, u_segments=160, v_segments=100, radius=r_l)
+    cut = [f for f in bm_l.faces
+           if (np.array(f.calc_center_median()) @ g_) > 0.15 * r_l
+           and (np.array(f.calc_center_median()) @ u_ / (0.30 * r_l)) ** 2 + (np.array(f.calc_center_median()) @ h_ / (0.88 * r_l)) ** 2 < 1.0]
+    bmesh.ops.delete(bm_l, geom=cut, context="FACES")
+    lid = prec.new_object("LidR" if sx_ > 0 else "LidL", bm_l, [])
+    lid.location = tuple(centre_)
+    EYES.append(ball)
+    LIDS.append(lid)
+    EYE_FRAMES.append((g_, h_, u_))
+DETAILS["eyes"] = dict(radius_mm=er * 1000, centre_shift_from_target_mm=[float(np.linalg.norm(np.array(e.location) - np.array([s * ec[0], ec[1], ec[2]]))) * 1000 for e, s in zip(EYES, (1.0, -1.0))],
+                       gaze=[g.tolist() for g, _h, _u in EYE_FRAMES])
+print("EYES", json.dumps(DETAILS["eyes"]), flush=True)
+DETAIL_OBJS = TEETH + [tongue] + EYES + LIDS
+lap("details")
+
 # ------------------------------------------------------------------------------------------------ checks
 w = sc3["whole"]
 rep.at_most("accuracy", "model -> target mean (0.5% of L)", w["accuracy"]["mean"], 0.005 * LEN * 1000)
@@ -527,36 +710,64 @@ if not NORENDER:
     prec.contact_sheet(outs[3:], rb.out("ref3d_target.png"))
     lap("render")
 
-    # ---- texturing and colour balance: one procedural material set, light colour and compositor grade per palette
+    # ---- texturing, details and colour balance: materials, light colour, compositor grade and breath per palette
     horn_r = np.linalg.norm(Cc, axis=1)
     skin_parts = [skull, jaw]
     horn_parts = [horn] + [sp["obj"] for sp in SPIKES]
-    pal_tiles, first_views = [], []
+    VISIBLE = [o for o in MODEL if o is not eye] + DETAIL_OBJS
+    pal_tiles, breath_tiles, first_views, close_tiles = [], [], [], []
+    mouth_cam_pos = tuple(MOUTH_C + np.array([0.12, -0.55, 0.30]))
     for pname in PALETTES:
         pal = PALETTE_DEFS[pname]
         m_skin = prec.scale_skin_material(f"Skin_{pname}", pal)
         m_horn = prec.horn_material(f"Horn_{pname}", pal, r0=float(horn_r.min()), r1=float(horn_r.max()))
-        m_eye = prec.glow_eye_material(f"Eye_{pname}", pal["eye"])
-        for ob, m in [(o, m_skin) for o in skin_parts] + [(o, m_horn) for o in horn_parts] + [(eye, m_eye)]:
+        m_mouth = prec.flesh_material(f"Mouth_{pname}", pal["mouth"])
+        m_tooth = prec.simple_material(f"Tooth_{pname}", pal["tooth"], rough=0.3, spec=0.6)
+        assign = [(o, [m_skin, m_mouth]) for o in skin_parts] + [(o, [m_horn]) for o in horn_parts] + [(tongue, [m_mouth])] \
+            + [(o, [m_tooth]) for o in TEETH] + [(o, [m_skin]) for o in LIDS]
+        for k_, ((ball, (g_, h_, u_))) in enumerate(zip(EYES, EYE_FRAMES)):
+            assign.append((ball, [prec.eye_material(f"Eye_{pname}_{k_}", pal, g_, h_, u_, er)]))
+        for ob, ms in assign:
             ob.data.materials.clear()
-            ob.data.materials.append(m)
+            for m in ms:
+                ob.data.materials.append(m)
         for lname, col in pal["lights"].items():
             lo = bpy.data.objects.get(lname)
             if lo is not None:
                 lo.data.color = col
         prec.set_grade(sc, **pal["grade"])
+        show(VISIBLE)
         pal_tiles.append(shot(f"_p_{pname}.png", cams["hero"], res=(720, 720), samples=40))
         if pname == PALETTES[0]:
             first_views = [pal_tiles[-1], shot(f"_p_{pname}_side.png", cams["side"], res=(720, 720), samples=40),
                            shot(f"_p_{pname}_front.png", cams["front"], res=(720, 720), samples=40)]
+            ecam = prec.camera(tuple(np.array(EYES[0].location) + EYE_FRAMES[0][0] * 0.20 + np.array([0, 0, 0.012])), tuple(EYES[0].location), 85, "EyeCam")
+            mcam = prec.camera(mouth_cam_pos, tuple(MOUTH_C), 70, "MouthCam")
+            close_tiles = [shot(f"_p_{pname}_eye.png", ecam, res=(720, 720), samples=64), shot(f"_p_{pname}_mouth.png", mcam, res=(720, 720), samples=64)]
+        # breath: a volume cone from the mouth along the nose direction, plus a light of its own colour
+        bpal = pal["breath"]
+        bdir = (0.0, -1.0, -0.22)
+        breath = prec.breath_volume(f"Breath_{pname}", tuple(MOUTH_C), bdir, 0.85, 0.30, bpal)
+        bl_data = bpy.data.lights.new(f"BreathLight_{pname}", "POINT")
+        bl_data.energy, bl_data.color = 120.0, bpal["light"]
+        bl = bpy.data.objects.new(f"BreathLight_{pname}", bl_data)
+        sc.collection.objects.link(bl)
+        bl.location = tuple(MOUTH_C + np.array(bdir) * 0.25)
+        show(VISIBLE + [breath])
+        bcam = prec.camera((1.25, -1.45, 0.42), (0.0, -0.40, -0.06), 50, "BreathCam")
+        breath_tiles.append(shot(f"_b_{pname}.png", bcam, res=(720, 720), samples=40))
+        bpy.data.objects.remove(breath)
+        bpy.data.objects.remove(bl)
     prec.contact_sheet(pal_tiles, rb.out("ref3d_palettes.png"))
     prec.contact_sheet(first_views, rb.out("ref3d_textured_views.png"))
+    prec.contact_sheet(close_tiles, rb.out("ref3d_details.png"))
+    prec.contact_sheet(breath_tiles, rb.out("ref3d_breath.png"))
     lap("texture")
 
 # ------------------------------------------------------------------------------------------------ report
 spec = dict(unit_scale_m_per_glb_unit=S, head_length_m=LEN, skull_stations=ST_SKULL.tolist(), jaw_stations=ST_JAW.tolist(),
             jaw_frame=dict(origin_yz=origin_j.tolist(), axis_yz=ut.tolist(), normal_yz=nv.tolist()),
-            horn_path=Cc.tolist(), horn_radius=Rr.tolist(), eye=dict(center=ec.tolist(), radius=er),
+            horn_path=Cc.tolist(), horn_radius=Rr.tolist(), eye=dict(center=ec.tolist(), radius=er), details=DETAILS,
             thresholds=dict(accuracy_mean_frac=0.005, accuracy_p95_frac=0.02, completeness_mean_frac=0.01, iou=0.90),
             spikes=[dict(root=sp["root"].tolist(), root_radius=sp["r0"], length=sp["length"], max_radius=sp["radius"], mirrored=sp["mirrored"]) for sp in SPIKES],
             target="Red Dragon, GadgetHamster, CC-BY-4.0 (https://sketchfab.com/3d-models/red-dragon-77e89ab9b88a444cb51339c2ed3959a3)")

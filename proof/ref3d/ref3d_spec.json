@@ -867,6 +867,37 @@
   ],
   "radius": 0.012712264450182814
  },
+ "details": {
+  "teeth": {
+   "upper": 85,
+   "lower": 83,
+   "fused_components_split": 4,
+   "accuracy_mean_mm": 1.6569554553833874,
+   "completeness_mean_mm": 8.648999881581744
+  },
+  "tongue": {
+   "accuracy_mean_mm": 16.312849653586454
+  },
+  "eyes": {
+   "radius_mm": 12.712264450182813,
+   "centre_shift_from_target_mm": [
+    16.011498105789233,
+    16.011498105789233
+   ],
+   "gaze": [
+    [
+     0.9002578601859346,
+     -0.14697580600045027,
+     0.4097973860628694
+    ],
+    [
+     -0.9002578711807063,
+     -0.14697580779545313,
+     0.40979736126536576
+    ]
+   ]
+  }
+ },
  "thresholds": {
   "accuracy_mean_frac": 0.005,
   "accuracy_p95_frac": 0.02,

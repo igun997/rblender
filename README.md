@@ -254,6 +254,13 @@ Limits: the reference is a side-view skull drawing, so width is an assumption, t
 
 It makes the render look better, not the shape more accurate, and it is procedural, so it does not export as glTF image maps (the baked PBR path is the 2D-reference dragon above).
 
+**Eyes, mouth, teeth, tongue, breath.** Eyes sit on the fitted skin with slit pupils and eyelids; 168 teeth are measured one by one from the target (accuracy 1.7 mm, but 4 fused groups are split crudely, so completeness fails at 8.6 mm and the upper/lower counts differ by one); the tongue is a loft; each palette has its own breath as a Cycles volume with a coloured light (fire, poison gas, ice mist, molten). First image: eye and mouth closeups; second: the four breaths.
+
+![eye and mouth](proof/ref3d/ref3d_details.png)
+![breath](proof/ref3d/ref3d_breath.png)
+
+The eyes are the target's own 12.7 mm radius, so they are small in a hero shot. The breath is a render effect, not geometry, so it does not export to glTF. 9 of 15 checks pass overall; the accuracy, IoU and teeth-completeness failures are listed in `docs/PRECISION.md`.
+
 The useful part is what the loop exposed: silhouette IoU and Chamfer distance were satisfied by a crumpled surface, per-vertex distance flattered the fit (2 mm against 9.8 mm on the sampled surface), and the first "smooth" setting only passed because it barely moved the mesh. Details and numbers are in `docs/PRECISION.md`.
 
 Paste this to have an agent do the same for something else:

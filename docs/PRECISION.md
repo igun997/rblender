@@ -205,6 +205,31 @@ This texturing sits on the smooth but inaccurate 3D practice model, so it makes 
 shape more accurate; it is procedural (not baked), so it does not export to glTF as image maps. The baked PBR path is
 the 2D-reference dragon (`dragon_head.py`).
 
+## Details: teeth, tongue, eyes, mouth, breath
+
+Teeth are **measured one by one**. The target's teeth mesh splits into connected components (122: 61 per row); each
+becomes a tapered, slightly curved tube along a 4-point principal curve with its root buried in the nearest part of
+the model, built for x > 0 and mirrored. Four components were fused (about 12 teeth each); they are split with
+k-means and the result is cruder: the tooth count is then off by one between the rows (85 vs 84) and the accuracy
+and completeness checks fail, so I capped the tooth radius at 6 mm instead of tuning the limits. The tongue is a loft
+in its own frame (like the jaw). Faces that look into the mouth get a second material slot (wet flesh).
+
+Eyes are placed on the *fitted* skin, not at the target's centre: a ray onto the skull gives the surface point and
+normal, and the ball protrudes by a quarter of its radius (16 mm from the target centre). In the earlier palette
+renders the eyes were not visible; I did not isolate why, burial under the 9 mm fitting error is my assumption. The radius is the target's own, 12.7 mm, so they are small in a
+hero shot: the closeup is the proof. Procedural eye shader: sclera, fibrous iris with a dark limbal ring, vertical
+slit pupil, emission only in the iris; an elliptical eyelid shell leaves the opening.
+
+Breath is a Cycles volume inside a cone from the mouth: density falls off along the length and towards the edge,
+noise breaks it up, and a heat ramp runs white-hot core to cool edge, plus a coloured light. One per palette: fire,
+poison gas, ice mist, molten. First pass was a flat red blob because the heat value never reached the hot end of the
+ramp (fixed with a gain and tighter noise range).
+
+Limits: the model has 168 teeth (85 upper, 83 lower) where the target has 122 measured teeth plus 4 fused groups of
+about 12, so it is not an exact copy; the eye is small; the mouth interior is the loft's inner faces, not a modelled
+palate; the volume breath is a render effect, not geometry, so it does not export to glTF; the eyelid edge is a face
+cut, not a smooth boundary.
+
 ## Using it from an agent
 
 ```python

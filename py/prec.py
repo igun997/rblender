@@ -1019,6 +1019,220 @@ def set_grade(scene, lift=(0, 0, 0), gamma=(1, 1, 1), gain=(1, 1, 1), saturation
     scene.render.use_compositing = True
 
 
+def eye_material(name, pal, gaze, horiz, up, radius):
+    """Procedural reptile eye in the eye object's own coordinates (object origin = eye centre). gaze/horiz/up are the
+    orthonormal axes of the eye. Sclera, a fibrous iris with a dark limbal ring, a vertical slit pupil, emission.
+    pal keys: eye (iris colour), sclera, eye_glow."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial")
+    bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
+    tc = _node(nt, "ShaderNodeTexCoord")
+
+    def dot(vec):
+        n = _node(nt, "ShaderNodeVectorMath", operation="DOT_PRODUCT")
+        nt.links.new(tc.outputs["Object"], n.inputs[0])
+        n.inputs[1].default_value = tuple(float(x) for x in vec)
+        return n
+    dg, dh, du = dot(gaze), dot(horiz), dot(up)
+    inv_r = 1.0 / radius
+
+    def mul(a, b, const=None):
+        n = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+        nt.links.new(a, n.inputs[0])
+        if const is None:
+            nt.links.new(b, n.inputs[1])
+        else:
+            n.inputs[1].default_value = const
+        return n
+    h = mul(dh.outputs["Value"], None, inv_r)   # horizontal, in radii
+    u = mul(du.outputs["Value"], None, inv_r)   # vertical, in radii
+    g = mul(dg.outputs["Value"], None, inv_r)   # towards the viewer
+    h2 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(h.outputs["Value"], h2.inputs[0])
+    nt.links.new(h.outputs["Value"], h2.inputs[1])
+    u2 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(u.outputs["Value"], u2.inputs[0])
+    nt.links.new(u.outputs["Value"], u2.inputs[1])
+    rho2 = _node(nt, "ShaderNodeMath", operation="ADD")
+    nt.links.new(h2.outputs["Value"], rho2.inputs[0])
+    nt.links.new(u2.outputs["Value"], rho2.inputs[1])
+    rho = _node(nt, "ShaderNodeMath", operation="SQRT")
+    nt.links.new(rho2.outputs["Value"], rho.inputs[0])
+    # iris: rho < 0.72 on the front hemisphere. Smooth edge, limbal ring darkening near the rim.
+    front = _node(nt, "ShaderNodeMapRange")
+    front.inputs["From Min"].default_value = 0.0
+    front.inputs["From Max"].default_value = 0.25
+    nt.links.new(g.outputs["Value"], front.inputs["Value"])
+    iris_r = _node(nt, "ShaderNodeMapRange")
+    iris_r.inputs["From Min"].default_value = 0.78
+    iris_r.inputs["From Max"].default_value = 0.70
+    nt.links.new(rho.outputs["Value"], iris_r.inputs["Value"])
+    iris_mask = mul(front.outputs["Result"], iris_r.outputs["Result"])
+    # slit pupil: narrow in the horizontal direction, tall in the vertical one
+    slit = _node(nt, "ShaderNodeMapRange")
+    slit.inputs["From Min"].default_value = 0.20
+    slit.inputs["From Max"].default_value = 0.12
+    habs = _node(nt, "ShaderNodeMath", operation="ABSOLUTE")
+    nt.links.new(h.outputs["Value"], habs.inputs[0])
+    nt.links.new(habs.outputs["Value"], slit.inputs["Value"])
+    pupil = mul(slit.outputs["Result"], iris_mask.outputs["Value"])
+    # iris colour: radial gradient with fibres (noise stretched along the radius)
+    ring = _ramp(nt, [(0.0, tuple(0.35 * c + 0.65 * 1.0 for c in pal["eye"])), (0.45, pal["eye"]),
+                      (0.85, tuple(0.35 * c for c in pal["eye"])), (1.0, (0.01, 0.005, 0.0))])
+    nt.links.new(rho.outputs["Value"], ring.inputs["Fac"])
+    fib = _node(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
+    fib.inputs["Scale"].default_value = 9.0 / radius * 0.01
+    fib.inputs["Detail"].default_value = 6.0
+    nt.links.new(tc.outputs["Object"], fib.inputs["Vector"])
+    iris = _node(nt, "ShaderNodeMixRGB", blend_type="MULTIPLY")
+    iris.inputs["Fac"].default_value = 0.5
+    nt.links.new(ring.outputs["Color"], iris.inputs["Color1"])
+    nt.links.new(fib.outputs["Color"], iris.inputs["Color2"])
+    with_iris = _node(nt, "ShaderNodeMixRGB", blend_type="MIX")
+    with_iris.inputs["Color1"].default_value = (*pal.get("sclera", (0.80, 0.72, 0.52))[:3], 1.0)
+    nt.links.new(iris_mask.outputs["Value"], with_iris.inputs["Fac"])
+    nt.links.new(iris.outputs["Color"], with_iris.inputs["Color2"])
+    with_pupil = _node(nt, "ShaderNodeMixRGB", blend_type="MIX")
+    nt.links.new(pupil.outputs["Value"], with_pupil.inputs["Fac"])
+    nt.links.new(with_iris.outputs["Color"], with_pupil.inputs["Color1"])
+    with_pupil.inputs["Color2"].default_value = (0.0, 0.0, 0.0, 1.0)
+    nt.links.new(with_pupil.outputs["Color"], bsdf.inputs["Base Color"])
+    # emission only in the iris, never in the pupil
+    glow = _node(nt, "ShaderNodeMath", operation="SUBTRACT")
+    nt.links.new(iris_mask.outputs["Value"], glow.inputs[0])
+    nt.links.new(pupil.outputs["Value"], glow.inputs[1])
+    gl = mul(glow.outputs["Value"], None, pal.get("eye_glow", 1.2))
+    nt.links.new(iris.outputs["Color"], bsdf.inputs["Emission Color"])
+    nt.links.new(gl.outputs["Value"], bsdf.inputs["Emission Strength"])
+    bsdf.inputs["Roughness"].default_value = 0.08
+    if "Specular IOR Level" in bsdf.inputs:
+        bsdf.inputs["Specular IOR Level"].default_value = 1.0
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return m
+
+
+def flesh_material(name, color, wet=0.25, vein=0.6):
+    """Mouth flesh: base colour with a noise-driven vein/mottle variation, wet gloss, soft bump."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial")
+    bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
+    tc = _node(nt, "ShaderNodeTexCoord")
+    nz = _node(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
+    nz.inputs["Scale"].default_value = 28.0
+    nz.inputs["Detail"].default_value = 7.0
+    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+    ramp = _ramp(nt, [(0.35, tuple(0.55 * c for c in color)), (0.55, color), (0.75, tuple(min(1.0, 1.35 * c + 0.05) for c in color))])
+    nt.links.new(nz.outputs["Fac"], ramp.inputs["Fac"])
+    mix = _node(nt, "ShaderNodeMixRGB", blend_type="MIX")
+    mix.inputs["Fac"].default_value = vein
+    mix.inputs["Color1"].default_value = (*color[:3], 1.0)
+    nt.links.new(ramp.outputs["Color"], mix.inputs["Color2"])
+    nt.links.new(mix.outputs["Color"], bsdf.inputs["Base Color"])
+    bp = _node(nt, "ShaderNodeBump")
+    bp.inputs["Strength"].default_value = 0.25
+    bp.inputs["Distance"].default_value = 0.002
+    nt.links.new(nz.outputs["Fac"], bp.inputs["Height"])
+    nt.links.new(bp.outputs["Normal"], bsdf.inputs["Normal"])
+    bsdf.inputs["Roughness"].default_value = wet
+    if "Specular IOR Level" in bsdf.inputs:
+        bsdf.inputs["Specular IOR Level"].default_value = 0.8
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return m
+
+
+def breath_volume(name, origin, direction, length, r_end, pal, r_start=0.02):
+    """Flame, gas or mist as a Cycles volume inside a cone: density falls off along the length and towards the edge,
+    noise breaks it up, emission follows a heat ramp (hot core to cool tip). pal: ramp (4 colours), density,
+    emission, noise_scale. Returns the cone object; the volume only shows in a render."""
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=36, radius1=r_start, radius2=r_end, depth=length)
+    bmesh.ops.translate(bm, vec=(0, 0, length / 2), verts=bm.verts[:])
+    ob = new_object(name, bm, [])
+    ob.location = origin
+    ob.rotation_euler = V(direction).to_track_quat("Z", "Y").to_euler()
+    m = bpy.data.materials.new(name + "_Vol")
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial")
+    vol = _node(nt, "ShaderNodeVolumePrincipled")
+    tc = _node(nt, "ShaderNodeTexCoord")
+    sep = _node(nt, "ShaderNodeSeparateXYZ")
+    nt.links.new(tc.outputs["Object"], sep.inputs["Vector"])
+    t = _node(nt, "ShaderNodeMapRange")           # 0 at the mouth, 1 at the tip
+    t.inputs["From Min"].default_value = 0.0
+    t.inputs["From Max"].default_value = length
+    nt.links.new(sep.outputs["Z"], t.inputs["Value"])
+    t.clamp = True
+    xy = _node(nt, "ShaderNodeCombineXYZ")
+    nt.links.new(sep.outputs["X"], xy.inputs["X"])
+    nt.links.new(sep.outputs["Y"], xy.inputs["Y"])
+    rad = _node(nt, "ShaderNodeVectorMath", operation="LENGTH")
+    nt.links.new(xy.outputs["Vector"], rad.inputs[0])
+    rmax = _node(nt, "ShaderNodeMapRange")        # cone radius at this t
+    rmax.inputs["To Min"].default_value = r_start
+    rmax.inputs["To Max"].default_value = r_end
+    nt.links.new(t.outputs["Result"], rmax.inputs["Value"])
+    rn = _node(nt, "ShaderNodeMath", operation="DIVIDE")
+    nt.links.new(rad.outputs["Value"], rn.inputs[0])
+    nt.links.new(rmax.outputs["Result"], rn.inputs[1])
+    core = _node(nt, "ShaderNodeMapRange")        # 1 on the axis, 0 at the edge
+    core.inputs["From Min"].default_value = 0.95
+    core.inputs["From Max"].default_value = 0.10
+    core.clamp = True
+    nt.links.new(rn.outputs["Value"], core.inputs["Value"])
+    along = _node(nt, "ShaderNodeMapRange")       # 1 at the mouth, 0 at the tip
+    along.inputs["From Min"].default_value = 0.0
+    along.inputs["From Max"].default_value = 1.0
+    along.inputs["To Min"].default_value = 1.0
+    along.inputs["To Max"].default_value = 0.0
+    along.clamp = True
+    nt.links.new(t.outputs["Result"], along.inputs["Value"])
+    nz = _node(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
+    nz.inputs["Scale"].default_value = pal.get("noise_scale", 9.0)
+    nz.inputs["Detail"].default_value = 7.0
+    nz.inputs["Distortion"].default_value = 1.2
+    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+    nzr = _node(nt, "ShaderNodeMapRange")
+    nzr.inputs["From Min"].default_value = 0.40
+    nzr.inputs["From Max"].default_value = 0.60
+    nzr.clamp = True
+    nt.links.new(nz.outputs["Fac"], nzr.inputs["Value"])
+    shape = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(core.outputs["Result"], shape.inputs[0])
+    nt.links.new(along.outputs["Result"], shape.inputs[1])
+    dens = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(shape.outputs["Value"], dens.inputs[0])
+    nt.links.new(nzr.outputs["Result"], dens.inputs[1])
+    dens2 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(dens.outputs["Value"], dens2.inputs[0])
+    dens2.inputs[1].default_value = pal.get("density", 20.0)
+    heat = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(shape.outputs["Value"], heat.inputs[0])
+    nt.links.new(nzr.outputs["Result"], heat.inputs[1])
+    heat_g = _node(nt, "ShaderNodeMath", operation="MULTIPLY", use_clamp=True)  # reach the white-hot end of the ramp
+    nt.links.new(heat.outputs["Value"], heat_g.inputs[0])
+    heat_g.inputs[1].default_value = 2.2
+    ramp = _ramp(nt, [(0.0, pal["ramp"][0]), (0.22, pal["ramp"][1]), (0.50, pal["ramp"][2]), (0.85, pal["ramp"][3])])
+    nt.links.new(heat_g.outputs["Value"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], vol.inputs["Emission Color"])
+    nt.links.new(ramp.outputs["Color"], vol.inputs["Color"])
+    em = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(dens.outputs["Value"], em.inputs[0])
+    em.inputs[1].default_value = pal.get("emission", 6.0)
+    nt.links.new(em.outputs["Value"], vol.inputs["Emission Strength"])
+    nt.links.new(dens2.outputs["Value"], vol.inputs["Density"])
+    nt.links.new(vol.outputs["Volume"], out.inputs["Volume"])
+    ob.data.materials.append(m)
+    return ob
+
+
 # ----------------------------------------------------------------------------- Mirror modifier
 def add_mirror(ob, axis=0, merge=True, clip=True, mirror_u=True, threshold=1e-5):
     """Model one half, let Blender's Mirror modifier produce the other (exact symmetry by construction)."""

@@ -1,3 +1,8 @@
+-- teeth
+  [FAIL] upper teeth built (target components 8..150 vertices) measured         85     target         84  err        1  tol 0
+  [ ok ] lower teeth built (target components 8..150 vertices) measured         83     target         83  err        0  tol 0
+  [ ok ] model -> target mean (0.2% of L)               measured      1.657 mm  target <= 1.7795798778533936  err           tol 
+  [FAIL] target -> model mean (0.2% of L)               measured      8.649 mm  target <= 1.7795798778533936  err           tol 
 -- accuracy
   [FAIL] model -> target mean (0.5% of L)               measured      9.353 mm  target <= 4.448949694633484  err           tol 
   [FAIL] model -> target p95 (2% of L)                  measured     33.139 mm  target <= 17.795798778533936  err           tol 
@@ -16,4 +21,4 @@
   [ ok ] jaw mean dihedral angle after the fit (<= 1.5x target) measured     19.661 deg  target <= 24.25286453234758  err           tol 
 -- spikes
   [ ok ] residual spikes did not make the mean worse    measured 10.12 -> 9.35 mm     target             err           tol 
-7/11 checks pass
+9/15 checks pass
