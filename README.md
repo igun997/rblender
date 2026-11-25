@@ -261,6 +261,8 @@ It makes the render look better, not the shape more accurate, and it is procedur
 
 The eyes are the target's own 12.7 mm radius, so they are small in a hero shot. The breath is a render effect, not geometry, so it does not export to glTF. 9 of 15 checks pass overall; the accuracy, IoU and teeth-completeness failures are listed in `docs/PRECISION.md`.
 
+**glb:** the run also writes `out/dragon_ref3d.glb` (2 MB, 18 meshes, 53,632 vertices, Mirror applied, flat PBR colours from the first palette; the procedural scales, eyes and breath do not export). `rblender run scenes/check_glb.py -- exports/dragon_ref3d.glb` re-imports it in a fresh Blender: x range -0.382 to 0.382 m, size 0.764 x 0.889 x 0.806 m. The file is not committed (derived from a CC-BY target); regenerate it with the command above.
+
 The useful part is what the loop exposed: silhouette IoU and Chamfer distance were satisfied by a crumpled surface, per-vertex distance flattered the fit (2 mm against 9.8 mm on the sampled surface), and the first "smooth" setting only passed because it barely moved the mesh. Details and numbers are in `docs/PRECISION.md`.
 
 Paste this to have an agent do the same for something else:

@@ -643,6 +643,32 @@ print("EYES", json.dumps(DETAILS["eyes"]), flush=True)
 DETAIL_OBJS = TEETH + [tongue] + EYES + LIDS
 lap("details")
 
+# ------------------------------------------------------------------------------------------------ glTF export
+# The procedural shaders (scales, eyes, flesh, breath) are not glTF image maps, so the file carries flat PBR colours
+# from the first palette; the geometry is complete with the Mirror modifiers applied.
+_p0 = PALETTE_DEFS[PALETTES[0]]
+_g = {"skin": prec.simple_material("G_Skin", _p0["side"], rough=0.45, spec=0.5),
+      "mouth": prec.simple_material("G_Mouth", _p0["mouth"], rough=0.3, spec=0.6),
+      "horn": prec.simple_material("G_Horn", _p0["horn_mid"], rough=0.45, spec=0.4),
+      "tooth": prec.simple_material("G_Tooth", _p0["tooth"], rough=0.3, spec=0.6)}
+_gl_assign = [(skull, [_g["skin"], _g["mouth"]]), (jaw, [_g["skin"], _g["mouth"]]), (tongue, [_g["mouth"]])] \
+    + [(o, [_g["horn"]]) for o in [horn] + [sp["obj"] for sp in SPIKES]] + [(o, [_g["tooth"]]) for o in TEETH] \
+    + [(o, [_g["skin"]]) for o in LIDS] \
+    + [(o, [prec.simple_material(f"G_Eye{i}", _p0["eye"], rough=0.15, spec=0.8, emission=_p0["eye"])]) for i, o in enumerate(EYES)]
+for _o, _ms in _gl_assign:
+    _o.data.materials.clear()
+    for _m in _ms:
+        _o.data.materials.append(_m)
+for _o in bpy.data.objects:
+    _o.select_set(False)
+for _o, _ms in _gl_assign:
+    _o.select_set(True)
+bpy.context.view_layer.objects.active = skull
+GLB = rb.export("dragon_ref3d.glb", use_selection=True, export_apply=True)
+DETAILS["glb"] = dict(file="dragon_ref3d.glb", bytes=os.path.getsize(GLB), objects=len(_gl_assign), materials="flat PBR colours from the first palette")
+print("GLB", json.dumps(DETAILS["glb"]), flush=True)
+lap("glb")
+
 # ------------------------------------------------------------------------------------------------ checks
 w = sc3["whole"]
 rep.at_most("accuracy", "model -> target mean (0.5% of L)", w["accuracy"]["mean"], 0.005 * LEN * 1000)
