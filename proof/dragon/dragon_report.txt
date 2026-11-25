@@ -1,0 +1,54 @@
+-- topology
+  [ ok ] Dragon_Head: non-manifold edges                measured          0     target          0  err        0  tol 0
+  [ ok ] Dragon_Head: separate islands                  measured          1     target          1  err        0  tol 0
+  [ ok ] Dragon_Jaw: non-manifold edges                 measured          0     target          0  err        0  tol 0
+  [ ok ] Dragon_Jaw: separate islands                   measured          1     target          1  err        0  tol 0
+  [ ok ] Horn: non-manifold edges                       measured          0     target          0  err        0  tol 0
+  [ ok ] Horn: separate islands                         measured          2     target          2  err        0  tol 0
+  [ ok ] Eye.L: non-manifold edges                      measured          0     target          0  err        0  tol 0
+  [ ok ] Eye.L: separate islands                        measured          1     target          1  err        0  tol 0
+  [ ok ] Eye.R: non-manifold edges                      measured          0     target          0  err        0  tol 0
+  [ ok ] Eye.R: separate islands                        measured          1     target          1  err        0  tol 0
+  [ ok ] Teeth_Upper: closed spikes (islands)           measured         18     target         18  err        0  tol 0
+  [ ok ] Teeth_Upper: non-manifold edges                measured          0     target          0  err        0  tol 0
+  [ ok ] Teeth_Lower: closed spikes (islands)           measured         16     target         16  err        0  tol 0
+  [ ok ] Teeth_Lower: non-manifold edges                measured          0     target          0  err        0  tol 0
+-- sculpt loop
+  [ ok ] eye protrusion beyond surface                  measured      9.891 mm  target     10.000  err   -0.109  tol 0.2
+  [ ok ] Kelvinlet constraint solve residual at the handles (head) measured      0.000 mm  target   <= 0.001  err           tol 
+  [ ok ] Kelvinlet constraint solve residual at the handles (jaw) measured      0.000 mm  target   <= 0.001  err           tol 
+  [ ok ] worst edit miss, head (requested vs measured)  measured      0.053 mm  target    <= 0.15  err           tol 
+  [ ok ] worst edit miss, jaw (requested vs measured)   measured      0.058 mm  target    <= 0.15  err           tol 
+  [ ok ] edits are local: untouched vertices stay put   measured p25 move 0.066 mm, max 12.5 mm     target             err           tol 
+-- symmetry (Mirror modifier)
+  [ ok ] Dragon_Head: mirror error max                  measured      0.000 mm  target   <= 0.001  err           tol 
+  [ ok ] Dragon_Jaw: mirror error max                   measured      0.000 mm  target   <= 0.001  err           tol 
+  [ ok ] Horn: mirror error max                         measured      0.000 mm  target   <= 0.001  err           tol 
+-- reference silhouette
+  [ ok ] IoU vs the reference side view (absolute mapping, no fitting) measured      0.981     target    >= 0.93  err           tol 
+  [ ok ] top outline error, mean                        measured      0.518 mm  target     <= 4.0  err           tol 
+  [ ok ] top outline error, p95                         measured      1.429 mm  target    <= 12.0  err           tol 
+  [ ok ] bottom outline error, mean                     measured      1.301 mm  target     <= 4.0  err           tol 
+  [ ok ] bottom outline error, p95                      measured      1.429 mm  target    <= 12.0  err           tol 
+  [ ok ] horn tip x vs reference (px -> mm)             measured     -4.286 mm  target      0.000  err   -4.286  tol 6.0
+  [ ok ] brow top height above the orbit centre, model vs reference (silhouette) measured     62.857 mm  target     62.857  err    0.000  tol 3.0
+-- teeth
+  [ ok ] upper: tooth count                             measured         18     target         18  err        0  tol 0
+  [ ok ] upper: longest tooth = canine                  measured     34.000 mm  target     34.000  err    0.000  tol 0.01
+  [ ok ] upper: roots on surface (worst)                measured      0.000 mm  target     <= 0.3  err           tol 
+  [ ok ] lower: tooth count                             measured         16     target         16  err        0  tol 0
+  [ ok ] lower: longest tooth = canine                  measured     30.000 mm  target     30.000  err    0.000  tol 0.01
+  [ ok ] lower: roots on surface (worst)                measured      0.000 mm  target     <= 0.3  err           tol 
+-- dimensions
+  [ ok ] snout tip y (the nose-bulb edit moves the tip by design) measured   -467.211 mm  target   -467.000  err   -0.211  tol 0.5
+  [ ok ] jaw open angle (measured from the jaw tip about the hinge) measured      0.000 deg  target      0.000  err    0.000  tol 0.01
+  [ ok ] eye spacing (centre to centre, from the eye meshes) measured    184.000 mm  target    184.000  err    0.000  tol 0.05
+  [ ok ] assembly bbox (m)                              measured 0.278 x 0.800 x 0.431     target             err           tol 
+-- bake
+  [ ok ] low-poly vs high-poly surface distance mean    measured      0.361 mm  target     <= 0.8  err           tol 
+  [ ok ] low-poly vs high-poly surface distance p99     measured      0.919 mm  target     <= 2.0  err           tol 
+  [ ok ] poly budget                                    measured low 46072 tris, high 152160 tris     target             err           tol 
+  [ ok ] normal map is tangent-space (blue dominant)    measured mean rgb [0.5, 0.5, 1.0]     target             err           tol 
+  [ ok ] ao map has occlusion range                     measured  std 0.313     target             err           tol 
+  [ ok ] texel density                                  measured 3.79 px/mm mean, p5 2.75, p95 5.12     target             err           tol 
+46/46 checks pass

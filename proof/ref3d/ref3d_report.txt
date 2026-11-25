@@ -1,0 +1,19 @@
+-- accuracy
+  [FAIL] model -> target mean (0.5% of L)               measured      9.353 mm  target <= 4.448949694633484  err           tol 
+  [FAIL] model -> target p95 (2% of L)                  measured     33.139 mm  target <= 17.795798778533936  err           tol 
+-- completeness
+  [ ok ] target -> model mean (1% of L)                 measured      8.794 mm  target <= 8.897899389266968  err           tol 
+-- silhouette
+  [ ok ] IoU side                                       measured      0.903     target     >= 0.9  err           tol 
+  [FAIL] IoU front                                      measured      0.872     target     >= 0.9  err           tol 
+  [FAIL] IoU top                                        measured      0.886     target     >= 0.9  err           tol 
+-- symmetry
+  [ ok ] skull mirror is a modifier (exact by construction) measured                target             err           tol 
+-- fit
+  [ ok ] Kelvinlet fit did not make the mean worse than the loft measured 18.34 -> 10.12 mm     target             err           tol 
+-- smoothness
+  [ ok ] skull mean dihedral angle after the fit (<= 1.5x target) measured     21.136 deg  target <= 22.3702916494325  err           tol 
+  [ ok ] jaw mean dihedral angle after the fit (<= 1.5x target) measured     19.661 deg  target <= 24.25286453234758  err           tol 
+-- spikes
+  [ ok ] residual spikes did not make the mean worse    measured 10.12 -> 9.35 mm     target             err           tol 
+7/11 checks pass

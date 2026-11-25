@@ -1,0 +1,362 @@
+{
+  "eye_c": [
+    0.092,
+    -0.16700000000000004,
+    0.1357142857142857
+  ],
+  "eye_r": 0.022,
+  "eye_protrusion": 0.01,
+  "brow_h": 0.06142857142857143,
+  "hinge": [
+    0.0,
+    -0.01414285714285718,
+    -0.0028571428571428636
+  ],
+  "open_deg": 0.0,
+  "teeth_up": 9,
+  "teeth_lo": 8,
+  "canine_up": 0.034,
+  "canine_lo": 0.03,
+  "snout_tip_y": -0.467,
+  "reference": {
+    "title": "3D dragon skull, side view",
+    "author": "Monika Zagrobelna",
+    "article": "How to Draw a Realistic Dragon Head in 3D Space (Envato Tuts+, 2013)",
+    "image_url": "https://cdn.tutsplus.com/vector/uploads/2013/08/dragonhead_1-1_skull.png",
+    "scheme_url": "https://cdn.tutsplus.com/vector/uploads/2013/08/dragonhead_1-3_skull_scheme_simplifeid.png",
+    "note": "Only a binary silhouette and hand-measured landmarks derived from the image are stored here, not the image itself."
+  },
+  "mapping": {
+    "ppm": 700.0,
+    "nose_tip_world_yz": [
+      -0.467,
+      0.0
+    ],
+    "landmarks_px": {
+      "nose_tip": [
+        18,
+        298
+      ],
+      "orbit_center": [
+        228,
+        203
+      ],
+      "nostril": [
+        66,
+        262
+      ],
+      "hinge": [
+        335,
+        300
+      ],
+      "brow_top": [
+        235,
+        160
+      ],
+      "horn_tip": [
+        580,
+        63
+      ]
+    },
+    "scheme_px": {
+      "braincase_ellipse": {
+        "cx": 308,
+        "cy": 233,
+        "a": 130,
+        "b": 78
+      },
+      "upper_jaw_rect": [
+        55,
+        238,
+        280,
+        305
+      ],
+      "lower_jaw_bar": [
+        55,
+        310,
+        360,
+        338
+      ],
+      "hinge_block": [
+        308,
+        246,
+        360,
+        338
+      ]
+    }
+  },
+  "head_edits": [
+    {
+      "name": "brow_peak",
+      "origin": [
+        0.07,
+        -0.15700000000000003,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 10.0,
+      "eps": 0.022
+    },
+    {
+      "name": "brow_back",
+      "origin": [
+        0.084,
+        -0.10700000000000004,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 11.0,
+      "eps": 0.02
+    },
+    {
+      "name": "brow_front",
+      "origin": [
+        0.056,
+        -0.20700000000000005,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 12.0,
+      "eps": 0.018
+    },
+    {
+      "name": "eye_socket",
+      "origin": [
+        0.4,
+        -0.16700000000000004,
+        0.1357142857142857
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": 10.639892946628152,
+      "eps": 0.016
+    },
+    {
+      "name": "lower_lid",
+      "origin": [
+        0.4,
+        -0.1612857142857143,
+        0.0757142857142857
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": 5.0,
+      "eps": 0.016
+    },
+    {
+      "name": "cheekbone",
+      "origin": [
+        0.4,
+        -0.13557142857142862,
+        0.042857142857142844
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": 10.0,
+      "eps": 0.03
+    },
+    {
+      "name": "maxilla",
+      "origin": [
+        0.4,
+        -0.30700000000000005,
+        0.03285714285714285
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": 6.0,
+      "eps": 0.025
+    },
+    {
+      "name": "nostril_rim",
+      "origin": [
+        0.026,
+        -0.37842857142857145,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 6.0,
+      "eps": 0.013
+    },
+    {
+      "name": "nostril_dent",
+      "origin": [
+        0.027,
+        -0.4141428571428572,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": -6.0,
+      "eps": 0.01
+    },
+    {
+      "name": "nose_bulb",
+      "origin": [
+        0.0,
+        -0.45271428571428574,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 6.0,
+      "eps": 0.016
+    },
+    {
+      "name": "snout_ridge_mid",
+      "origin": [
+        0.0,
+        -0.29271428571428576,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 9.0,
+      "eps": 0.04
+    },
+    {
+      "name": "snout_ridge_fore",
+      "origin": [
+        0.0,
+        -0.34985714285714287,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 12.0,
+      "eps": 0.04
+    },
+    {
+      "name": "forehead",
+      "origin": [
+        0.0,
+        -0.1855714285714286,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 7.0,
+      "eps": 0.05
+    },
+    {
+      "name": "temple",
+      "origin": [
+        0.4,
+        -0.021285714285714318,
+        0.16142857142857142
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": -8.0,
+      "eps": 0.04
+    },
+    {
+      "name": "occipital",
+      "origin": [
+        0.0,
+        0.09299999999999997,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "mm": 12.0,
+      "eps": 0.03
+    }
+  ],
+  "jaw_edits": [
+    {
+      "name": "chin",
+      "origin": [
+        0.0,
+        -0.40700000000000003,
+        -0.5
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "mm": 4.0,
+      "eps": 0.015
+    },
+    {
+      "name": "jaw_mid",
+      "origin": [
+        0.4,
+        -0.20700000000000005,
+        -0.045714285714285735
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": 4.0,
+      "eps": 0.03
+    },
+    {
+      "name": "jaw_angle",
+      "origin": [
+        0.4,
+        0.00014285714285711126,
+        -0.0028571428571428636
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "mm": 9.0,
+      "eps": 0.03
+    }
+  ]
+}

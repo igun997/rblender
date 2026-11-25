@@ -19,7 +19,7 @@ USAGE: rblender [-i INSTANCE] <command> [args]
   rig  [--quick]       PoC: model + rig (armature, skin weights) + walk cycle + export glb
   exec -- BLENDER_ARGS raw blender command line (e.g. -- -b scene.blend -a)
   pull [DIR]           copy remote out/ to DIR (default ./out)
-  verify [DIR] [--skin] [--anim]
+  verify [DIR] [--skin] [--anim] [--pbr]
                        prove the artifacts in DIR (default ./out) are real
   down                 pause the remote machine (wakes on next use)
 
@@ -101,6 +101,7 @@ fn real_main() -> Result<u8> {
             let req = verify::Require {
                 skin: take_flag(&mut args, "--skin"),
                 anim: take_flag(&mut args, "--anim"),
+                pbr: take_flag(&mut args, "--pbr"),
             };
             let dir = PathBuf::from(args.first().map_or("out", String::as_str));
             verify_dir(&dir, req)

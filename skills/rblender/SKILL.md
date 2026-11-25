@@ -48,3 +48,20 @@ If a command prints **SETUP REQUIRED** (exit 3) follow the rcargo skill: run ste
 Never delete the remote machine or workspaces on your own initiative (`rcargo remote destroy|rm|gc --all`); offer and wait for an explicit yes. `rblender down` only pauses it.
 
 Rust builds of rblender itself go through rcargo, never local `cargo build/test`.
+
+## Precise modeling (spec, measure, correct)
+
+For anything where proportions matter, do not eyeball renders. `import prec` (ships with rblender, see `docs/PRECISION.md`):
+
+1. **Spec first**: write stations/landmarks and target dimensions as numbers (metres) in the script.
+2. **Build from tables**, not guesses: loft sections with clean quads and grid UVs; place parts by computation (`prec.arc_positions`, `prec.ray` onto the measured surface, solve arc length by bisection).
+3. **Sculpt as declared moves**: `prec.solve_forces` + `prec.field` (Pixar's Regularized Kelvinlets) lands surface points on exact displacements while pins hold the rest still. `bpy.ops.sculpt.brush_stroke` does NOT work headless.
+4. **Close the loop**: measure what you built (`prec.ray`, `prec.topology`, `prec.symmetry`), correct the parameter (secant update), repeat until inside tolerance. Keep the best iterate. Never let two loops own the same number.
+5. **Against a reference**: absolute pixel to metre mapping, no registration. 2D: `prec.silhouette(objs, center, ppm, res, path, view="side|front|top")` + `prec.iou` + `prec.overlay_png`. 3D mesh: `prec.target_mesh`, `prec.chamfer` (accuracy = model to target, completeness = target to model, always on sampled SURFACE points, not vertices), `prec.fit_coarse_to_fine` (robust median pulls, roughness budget).
+6. **Model one half and add a Mirror modifier** (`prec.loft_half`, `prec.add_mirror`): exact symmetry. A side view says nothing about width; say so.
+7. **Metrics lie, look at the render**: a crumpled surface can score well on IoU and Chamfer. Also report `prec.roughness` (mean dihedral angle) and compare with the target's. Reject floating parts. Keep third-party references out of the repo; commit derived numbers only.
+8. **Report**: `prec.Report` prints a pass/fail table; fail loudly, report the real numbers, never loosen a limit after seeing the result.
+9. **Bake**: high-poly (voxel remesh + displacement) onto the low-poly UVs with `prec.bake_pass`, then `prec.pbr_material`. Check the glb with `rblender verify out --pbr`.
+
+Worked examples: `characters/dragon_head.py` (`rblender run characters/dragon_head.py -- --quick`) and `characters/dragon_ref3d.py` (3D target, see `docs/PRECISION.md`).
+Gotchas: set `image.colorspace_settings.name` BEFORE `pixels.foreach_set`; brush radius must exceed local vertex spacing; a triangulated quad mesh is not mirror-symmetric as a surface; a tube whose rings follow a sloping path bloats the silhouette (`prec.tube(axis=...)`); an interpolating Kelvinlet solve follows noisy targets (`prec.solve_stable`, median handles).

@@ -1,0 +1,1068 @@
+{
+  "rows": [
+    {
+      "group": "topology",
+      "name": "Dragon_Head: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Dragon_Head: separate islands",
+      "measured": 1,
+      "target": 1,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Dragon_Jaw: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Dragon_Jaw: separate islands",
+      "measured": 1,
+      "target": 1,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Horn: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Horn: separate islands",
+      "measured": 2,
+      "target": 2,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Eye.L: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Eye.L: separate islands",
+      "measured": 1,
+      "target": 1,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Eye.R: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Eye.R: separate islands",
+      "measured": 1,
+      "target": 1,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Teeth_Upper: closed spikes (islands)",
+      "measured": 18,
+      "target": 18,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Teeth_Upper: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Teeth_Lower: closed spikes (islands)",
+      "measured": 16,
+      "target": 16,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "topology",
+      "name": "Teeth_Lower: non-manifold edges",
+      "measured": 0,
+      "target": 0,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "sculpt loop",
+      "name": "eye protrusion beyond surface",
+      "measured": 9.891,
+      "target": 10.0,
+      "tol": 0.2,
+      "unit": "mm",
+      "err": -0.10899999999999972,
+      "ok": true
+    },
+    {
+      "group": "sculpt loop",
+      "name": "Kelvinlet constraint solve residual at the handles (head)",
+      "measured": 1.7520707107365752e-13,
+      "target": "<= 0.001",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "sculpt loop",
+      "name": "Kelvinlet constraint solve residual at the handles (jaw)",
+      "measured": 1.249000902703301e-13,
+      "target": "<= 0.001",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "sculpt loop",
+      "name": "worst edit miss, head (requested vs measured)",
+      "measured": 0.052790164947509766,
+      "target": "<= 0.15",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "sculpt loop",
+      "name": "worst edit miss, jaw (requested vs measured)",
+      "measured": 0.05804961919784546,
+      "target": "<= 0.15",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "sculpt loop",
+      "name": "edits are local: untouched vertices stay put",
+      "measured": "p25 move 0.066 mm, max 12.5 mm",
+      "target": "",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "symmetry (Mirror modifier)",
+      "name": "Dragon_Head: mirror error max",
+      "measured": 0.0,
+      "target": "<= 0.001",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "symmetry (Mirror modifier)",
+      "name": "Dragon_Jaw: mirror error max",
+      "measured": 0.0,
+      "target": "<= 0.001",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "symmetry (Mirror modifier)",
+      "name": "Horn: mirror error max",
+      "measured": 0.0,
+      "target": "<= 0.001",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "IoU vs the reference side view (absolute mapping, no fitting)",
+      "measured": 0.981002259190799,
+      "target": ">= 0.93",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "top outline error, mean",
+      "measured": 0.5178571428571428,
+      "target": "<= 4.0",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "top outline error, p95",
+      "measured": 1.4285714285714286,
+      "target": "<= 12.0",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "bottom outline error, mean",
+      "measured": 1.3010204081632653,
+      "target": "<= 4.0",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "bottom outline error, p95",
+      "measured": 1.4285714285714286,
+      "target": "<= 12.0",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "horn tip x vs reference (px -> mm)",
+      "measured": -4.285714285714286,
+      "target": 0.0,
+      "tol": 6.0,
+      "unit": "mm",
+      "err": -4.285714285714286,
+      "ok": true
+    },
+    {
+      "group": "reference silhouette",
+      "name": "brow top height above the orbit centre, model vs reference (silhouette)",
+      "measured": 62.85714285714286,
+      "target": 62.85714285714286,
+      "tol": 3.0,
+      "unit": "mm",
+      "err": 0.0,
+      "ok": true
+    },
+    {
+      "group": "teeth",
+      "name": "upper: tooth count",
+      "measured": 18,
+      "target": 18,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "teeth",
+      "name": "upper: longest tooth = canine",
+      "measured": 34.0,
+      "target": 34.0,
+      "tol": 0.01,
+      "unit": "mm",
+      "err": 0.0,
+      "ok": true
+    },
+    {
+      "group": "teeth",
+      "name": "upper: roots on surface (worst)",
+      "measured": 3.268928949751171e-05,
+      "target": "<= 0.3",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "teeth",
+      "name": "lower: tooth count",
+      "measured": 16,
+      "target": 16,
+      "tol": 0,
+      "unit": "",
+      "err": 0,
+      "ok": true
+    },
+    {
+      "group": "teeth",
+      "name": "lower: longest tooth = canine",
+      "measured": 30.0,
+      "target": 30.0,
+      "tol": 0.01,
+      "unit": "mm",
+      "err": 0.0,
+      "ok": true
+    },
+    {
+      "group": "teeth",
+      "name": "lower: roots on surface (worst)",
+      "measured": 2.1801701777235394e-05,
+      "target": "<= 0.3",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "dimensions",
+      "name": "snout tip y (the nose-bulb edit moves the tip by design)",
+      "measured": -467.2107994556427,
+      "target": -467.0,
+      "tol": 0.5,
+      "unit": "mm",
+      "err": -0.210799455642674,
+      "ok": true
+    },
+    {
+      "group": "dimensions",
+      "name": "jaw open angle (measured from the jaw tip about the hinge)",
+      "measured": 0.0,
+      "target": 0.0,
+      "tol": 0.01,
+      "unit": "deg",
+      "err": 0.0,
+      "ok": true
+    },
+    {
+      "group": "dimensions",
+      "name": "eye spacing (centre to centre, from the eye meshes)",
+      "measured": 184.00000035762787,
+      "target": 184.0,
+      "tol": 0.05,
+      "unit": "mm",
+      "err": 3.576278717609682e-07,
+      "ok": true
+    },
+    {
+      "group": "dimensions",
+      "name": "assembly bbox (m)",
+      "measured": "0.278 x 0.800 x 0.431",
+      "target": "",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "bake",
+      "name": "low-poly vs high-poly surface distance mean",
+      "measured": 0.36130551191187277,
+      "target": "<= 0.8",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "bake",
+      "name": "low-poly vs high-poly surface distance p99",
+      "measured": 0.9191823552828283,
+      "target": "<= 2.0",
+      "tol": "",
+      "unit": "mm",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "bake",
+      "name": "poly budget",
+      "measured": "low 46072 tris, high 152160 tris",
+      "target": "",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "bake",
+      "name": "normal map is tangent-space (blue dominant)",
+      "measured": "mean rgb [0.5, 0.5, 1.0]",
+      "target": "",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "bake",
+      "name": "ao map has occlusion range",
+      "measured": "std 0.313",
+      "target": "",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    },
+    {
+      "group": "bake",
+      "name": "texel density",
+      "measured": "3.79 px/mm mean, p5 2.75, p95 5.12",
+      "target": "",
+      "tol": "",
+      "unit": "",
+      "err": "",
+      "ok": true
+    }
+  ],
+  "ok": true,
+  "loops": {
+    "sculpt_loop": [
+      {
+        "iter": 0,
+        "socket_mm": 3.0,
+        "eye_protrusion_mm": 19.643,
+        "inner": 0.06507803499698639
+      },
+      {
+        "iter": 1,
+        "socket_mm": -6.643,
+        "eye_protrusion_mm": 9.278,
+        "inner": 0.06596465408802032
+      },
+      {
+        "iter": 2,
+        "socket_mm": -5.971,
+        "eye_protrusion_mm": 10.042,
+        "inner": 0.06589946150779724
+      },
+      {
+        "iter": 3,
+        "socket_mm": -5.971,
+        "eye_protrusion_mm": 13.103,
+        "inner": 0.05277898907661438
+      },
+      {
+        "iter": 4,
+        "socket_mm": -6.516,
+        "eye_protrusion_mm": 12.656,
+        "inner": 0.05281437933444977
+      },
+      {
+        "iter": 5,
+        "socket_mm": -9.752,
+        "eye_protrusion_mm": 10.017,
+        "inner": 0.05301554501056671
+      },
+      {
+        "iter": 6,
+        "socket_mm": -9.752,
+        "eye_protrusion_mm": 10.572,
+        "inner": 0.05273987352848053
+      },
+      {
+        "iter": 7,
+        "socket_mm": -10.64,
+        "eye_protrusion_mm": 9.904,
+        "inner": 0.052786439657211304
+      },
+      {
+        "iter": 8,
+        "socket_mm": -10.64,
+        "eye_protrusion_mm": 9.891,
+        "inner": 0.052790164947509766
+      }
+    ],
+    "sculpt_inner": [
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 1.960237527853792e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.2180115580558777,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.8275992658421956e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5989158600568771,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.1597307275911248e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.1977318972349167,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.654126918244515e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.06507803499698639,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 1.457167719820518e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.2199393957853317,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 1.9081958235744878e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.6041200906038284,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.96637714392034e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.20000804960727692,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 1.5059568175823657e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.06596465408802032,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.185751579730777e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.219805285334587,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.0209528495129803e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.6037606000900269,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.0990154059319366e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.1998441368341446,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 53,
+        "solve_residual_m": 2.0469737016526324e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.06589946150779724,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "jaw",
+        "it": 0,
+        "anchors": 3,
+        "pins": 35,
+        "solve_residual_m": 7.600257229123386e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.8167441040277481,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "jaw",
+        "it": 1,
+        "anchors": 3,
+        "pins": 35,
+        "solve_residual_m": 5.551115123125783e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.074111208319664,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.5092094240998222e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.130888193845749,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.8214596497756474e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5404977202415466,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 3.226585665316861e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.16924460232257843,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.97758476261356e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.05277898907661438,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.6132928326584306e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.1309831887483597,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.2923689896027213e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5407435894012451,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.6306400674181987e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.1693395972251892,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 2.0556473190325164e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.05281437933444977,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.5785983631388945e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.131519630551338,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.7954387976359953e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5421927273273468,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.1796119636642288e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.16990211606025696,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 2.393918396847994e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.05301554501056671,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "jaw",
+        "it": 0,
+        "anchors": 3,
+        "pins": 35,
+        "solve_residual_m": 9.71445146547012e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.7234721481800079,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "jaw",
+        "it": 1,
+        "anchors": 3,
+        "pins": 35,
+        "solve_residual_m": 4.7704895589362195e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.058157652616500854,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 1.2663481374630692e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.12049463391304,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 1.4951147958575106e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5409149527549744,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 2.445960101127298e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.16925019025802612,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 2.445960101127298e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.05273987352848053,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 1.5265566588595902e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.120792657136917,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 2.203098814490545e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5412893444299698,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 1.8388068845354155e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.16939175128936768,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 50,
+        "solve_residual_m": 1.7520707107365752e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.052786439657211304,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "jaw",
+        "it": 0,
+        "anchors": 3,
+        "pins": 34,
+        "solve_residual_m": 5.551115123125783e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.7255136072635651,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "jaw",
+        "it": 1,
+        "anchors": 3,
+        "pins": 34,
+        "solve_residual_m": 8.847089727481716e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.05848361551761627,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "head",
+        "it": 0,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.8214596497756474e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 2.11921127140522,
+        "worst": "brow_front"
+      },
+      {
+        "tag": "head",
+        "it": 1,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 2.6020852139652106e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.5415557026863098,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 2,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.7694179454963432e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.16945694386959076,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "head",
+        "it": 3,
+        "anchors": 15,
+        "pins": 48,
+        "solve_residual_m": 1.7520707107365752e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.052790164947509766,
+        "worst": "lower_lid"
+      },
+      {
+        "tag": "jaw",
+        "it": 0,
+        "anchors": 3,
+        "pins": 34,
+        "solve_residual_m": 5.2570252838390896e-17,
+        "regularisation": 0.0,
+        "max_err_mm": 0.7228295356035233,
+        "worst": "jaw_angle"
+      },
+      {
+        "tag": "jaw",
+        "it": 1,
+        "anchors": 3,
+        "pins": 34,
+        "solve_residual_m": 1.249000902703301e-16,
+        "regularisation": 0.0,
+        "max_err_mm": 0.05804961919784546,
+        "worst": "jaw_angle"
+      }
+    ],
+    "fit": [
+      {
+        "iter": 0,
+        "top_err_mean_px": 2.4933920704845813,
+        "top_err_max_px": 9.0,
+        "bottom_err_mean_px": 0.6567164179104478,
+        "bottom_err_max_px": 2.0
+      },
+      {
+        "iter": 1,
+        "top_err_mean_px": 0.3964757709251101,
+        "top_err_max_px": 3.0,
+        "bottom_err_mean_px": 0.0945273631840796,
+        "bottom_err_max_px": 1.0
+      },
+      {
+        "iter": 2,
+        "top_err_mean_px": 0.25877192982456143,
+        "top_err_max_px": 2.0,
+        "bottom_err_mean_px": 0.06716417910447761,
+        "bottom_err_max_px": 2.0
+      },
+      {
+        "iter": 3,
+        "top_err_mean_px": 0.25,
+        "top_err_max_px": 2.0,
+        "bottom_err_mean_px": 0.04228855721393035,
+        "bottom_err_max_px": 1.0
+      }
+    ],
+    "reference": {
+      "iou": 0.981002259190799,
+      "top_err_mean_px": 0.3625,
+      "top_err_p95_px": 1.0,
+      "bottom_err_mean_px": 0.9107142857142857,
+      "bottom_err_p95_px": 1.0,
+      "ref_area_px": 77117,
+      "model_area_px": 77211,
+      "ref_only_px": 693,
+      "model_only_px": 787
+    }
+  },
+  "timing": {
+    "loft_sculpt_fit": 3.5,
+    "horn": 3.5,
+    "teeth": 3.6,
+    "eyes": 3.6,
+    "head_skin": 49.4,
+    "jaw_skin": 59.6,
+    "verify": 59.8,
+    "hero": 131.6,
+    "views": 192.0,
+    "render": 245.0,
+    "export": 245.8
+  },
+  "head": {
+    "hi_tris": 94400,
+    "uv": {
+      "px_per_mm_mean": 3.785194078730999,
+      "px_per_mm_p5": 2.750937626345721,
+      "px_per_mm_p95": 5.121447419625441
+    },
+    "maps": {
+      "normal": {
+        "mean": [
+          0.5,
+          0.5,
+          1.0
+        ],
+        "std": [
+          0.043,
+          0.041,
+          0.006
+        ]
+      },
+      "albedo": {
+        "mean": [
+          0.332,
+          0.306,
+          0.232
+        ],
+        "std": [
+          0.192,
+          0.085,
+          0.054
+        ]
+      },
+      "ao": {
+        "mean": [
+          0.409,
+          0.409,
+          0.409
+        ],
+        "std": [
+          0.313,
+          0.313,
+          0.313
+        ]
+      }
+    }
+  },
+  "jaw": {
+    "hi_tris": 57760
+  }
+}

@@ -60,12 +60,15 @@ jobs:
           run_blender demo -P py/demo.py -- --quick
           run_blender rig -P py/rig.py -- --quick
           run_blender zeta -P characters/vestia_zeta.py -- --quick
+          run_blender dragon -P characters/dragon_head.py -- --quick
       - name: verify artifacts
         run: |
           ./target/release/rblender verify out/demo --anim
           ./target/release/rblender verify out/rig --skin --anim
           ./target/release/rblender verify out/zeta --skin --anim
           cat out/zeta/zeta_stats.json
+          ./target/release/rblender verify out/dragon --pbr
+          cat out/dragon/dragon_report.txt | tail -5
       - uses: actions/upload-artifact@v4
         with:
           name: blender-e2e-output
@@ -75,3 +78,6 @@ jobs:
             out/zeta/*.png
             out/zeta/*.glb
             out/zeta/zeta_stats.json
+            out/dragon/*.png
+            out/dragon/dragon_report.*
+            out/dragon/dragon_spec.json

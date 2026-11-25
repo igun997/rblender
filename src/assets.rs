@@ -9,6 +9,7 @@ pub const INSTALL_SH: &str = include_str!("../scripts/install-blender.sh");
 pub const SKILL_MD: &str = include_str!("../skills/rblender/SKILL.md");
 pub const HELLO_PY: &str = include_str!("../scenes/hello.py");
 pub const PY_FILES: &[(&str, &str)] = &[
+    ("prec.py", include_str!("../py/prec.py")),
     ("rb.py", include_str!("../py/rb.py")),
     ("demo.py", include_str!("../py/demo.py")),
     ("rig.py", include_str!("../py/rig.py")),

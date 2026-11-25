@@ -225,6 +225,36 @@ The left hand travels from hip height (z 0.785 m) to the brow (z 1.412 m) inside
 
 Honest limits of this model: it is built from lofted primitives and decals, so there is no sculpted detail; the face is simple, the bow reads as a heart-shaped loop, the olive shrug is thin, and EEVEE shows some shadow grain on skin. It is a demonstration of what headless scripted Blender can produce, not a production asset.
 
+### 5. Precise modeling: measure, compare, correct (dragon head)
+
+An LLM that writes `bpy` in one pass produces plausible shapes with wrong proportions. `py/prec.py` gives the agent a measuring loop: write a spec as numbers, build from tables, sculpt as declared moves (Pixar's Regularized Kelvinlets, because `sculpt.brush_stroke` does not run headless), measure the result, correct, and print a pass/fail table. Sources, equations, what works headless and every failure found are in [`docs/PRECISION.md`](docs/PRECISION.md).
+
+**Against a 2D reference** (`characters/dragon_head.py`): a half model with a Mirror modifier, a silhouette loop against the reference outline, high-poly scales baked to the low-poly UVs, glTF PBR. The overlay shows reference-only pixels in red and model-only in cyan; there is no registration fitting.
+
+![dragon textured views](proof/dragon/dragon_views.png)
+![reference overlay](proof/dragon/dragon_ref_overlay.png)
+
+```
+46/46 checks pass          IoU vs reference 0.981 (limit 0.93)       outline error mean 0.5 / 1.3 mm
+low 46,072 tris, high 152,160 tris, distance mean 0.36 mm, p99 0.92 mm     texel density 3.79 px/mm
+rblender verify out --pbr: 25 checked, 0 failed (glb: 3 baseColor, 2 normal, 2 occlusion maps)
+```
+
+Limits: the reference is a side-view skull drawing, so width is an assumption, the front and top views are unchecked, and it reads as a crocodile with cone horns.
+
+**Against a 3D target** (`characters/dragon_ref3d.py`, practice with a rigged dragon glb you supply): the head is split by skin weights, measured, lofted, fitted coarse to fine, and scored on surface distance, silhouettes and smoothness. Result: smooth, but **not a good copy** (7 of 11 checks pass; IoU 0.87 to 0.91, accuracy 9.4 mm against a 4.4 mm limit). First image: my model; second: the target (CC-BY, see credits).
+
+![ref3d model](proof/ref3d/ref3d_model.png)
+![ref3d target](proof/ref3d/ref3d_target.png)
+
+The useful part is what the loop exposed: silhouette IoU and Chamfer distance were satisfied by a crumpled surface, per-vertex distance flattered the fit (2 mm against 9.8 mm on the sampled surface), and the first "smooth" setting only passed because it barely moved the mesh. Details and numbers are in `docs/PRECISION.md`.
+
+Paste this to have an agent do the same for something else:
+
+````text
+Using rblender in this folder (already set up), build a precise <OBJECT> from a reference. First read .claude/skills/rblender/SKILL.md ("Precise modeling") and docs/PRECISION.md in https://github.com/igun997/rblender. Find a reference image or mesh, keep only derived numbers in the repo (never the third-party file), write the spec as numbers, model one half with a Mirror modifier, measure against the reference with an absolute pixel to metre mapping (no registration), correct in a loop, and fail loudly with prec.Report. Then LOOK at the renders: a metric can pass while the surface is crumpled, so also report a smoothness number. Run on the remote machine only, never local Blender. Report the real numbers, including failures.
+````
+
 ### CI
 
 [`ci.yml`](.github/workflows/ci.yml) runs fmt, clippy (`-D warnings`) and 13 unit tests on Linux and macOS, then a **blender e2e** job that installs real Blender with the same script rblender deploys remotely, runs `py/demo.py`, `py/rig.py` and the Zeta character (`--quick`), and fails unless `rblender verify` passes (`--skin --anim`). The outputs are uploaded as a build artifact. [`release.yml`](.github/workflows/release.yml) builds binaries for Linux (x86_64, aarch64) and macOS (arm64, x86_64) on every `v*` tag and publishes the release with checksums.
@@ -255,5 +285,7 @@ Never compile locally; use rcargo: `rcargo test`, `rcargo clippy --all-targets -
 ## Credits and disclaimer
 
 Vestia Zeta is a character of COVER Corp. / hololive Indonesia. The model in this repo is unofficial fan art generated from code for demonstration; no official assets, textures or models were used, only her public design as visual reference. Not affiliated with or endorsed by COVER Corp.
+
+Dragon references: the side-view skull in Monika Zagrobelna's "How to Draw a Realistic Dragon Head in 3D Space" (Envato Tuts+, 2013) was used for measurements only; only derived numbers are committed. "Red Dragon" by [GadgetHamster](https://sketchfab.com/GadgetHamster) ([Sketchfab](https://sketchfab.com/3d-models/red-dragon-77e89ab9b88a444cb51339c2ed3959a3), CC-BY-4.0) is the 3D target in `proof/ref3d/ref3d_target.png`, a render of that model; the glb itself is not in this repo.
 
 MIT licensed.

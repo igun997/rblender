@@ -16,6 +16,7 @@ pub struct Finding {
 pub struct Require {
     pub skin: bool,
     pub anim: bool,
+    pub pbr: bool,
 }
 
 pub fn dir(path: &Path, req: Require) -> std::io::Result<Vec<Finding>> {
@@ -113,7 +114,8 @@ fn png(b: &[u8]) -> (bool, String) {
     }
     let n = (px.len() / ch).max(1) as u64;
     let mean = lum / n;
-    let ok = colors.len() > 64 && mean > 2 && mean < 253;
+    // a blank render is one or two flat colours; a mask overlay legitimately has only a handful
+    let ok = colors.len() >= 3 && mean > 2 && mean < 253;
     (
         ok,
         format!(
@@ -149,6 +151,17 @@ fn glb(b: &[u8], req: Require) -> (bool, String) {
         .and_then(Value::as_array)
         .map_or(0, Vec::len);
     let (meshes, skins, anims) = (count("meshes"), count("skins"), count("animations"));
+    let mats = doc.get("materials").and_then(Value::as_array);
+    let with = |pointer: &str| {
+        mats.map_or(0, |m| {
+            m.iter().filter(|x| x.pointer(pointer).is_some()).count()
+        })
+    };
+    let (n_base, n_norm, n_occ) = (
+        with("/pbrMetallicRoughness/baseColorTexture"),
+        with("/normalTexture"),
+        with("/occlusionTexture"),
+    );
     let mut ok = ver == 2 && meshes > 0;
     let mut why = String::new();
     if req.skin && (skins == 0 || joints == 0) {
@@ -159,10 +172,14 @@ fn glb(b: &[u8], req: Require) -> (bool, String) {
         ok = false;
         why += " [no animation]";
     }
+    if req.pbr && (n_base == 0 || n_norm == 0 || n_occ == 0) {
+        ok = false;
+        why += " [missing baseColor/normal/occlusion map]";
+    }
     (
         ok,
         format!(
-            "glTF {ver}: {meshes} mesh, {} material, {} image, {} node, {skins} skin ({joints} joints), {anims} animation{why}",
+            "glTF {ver}: {meshes} mesh, {} material ({n_base} baseColor / {n_norm} normal / {n_occ} occlusion maps), {} image, {} node, {skins} skin ({joints} joints), {anims} animation{why}",
             count("materials"),
             count("images"),
             count("nodes"),
@@ -196,6 +213,7 @@ mod tests {
             Require {
                 skin: true,
                 anim: true,
+                ..Default::default()
             },
         );
         assert!(ok, "{d}");
@@ -211,11 +229,27 @@ mod tests {
                 &g,
                 Require {
                     skin: true,
-                    anim: false
+                    ..Default::default()
                 }
             )
             .0
         );
+    }
+
+    #[test]
+    fn glb_pbr_maps_are_detected() {
+        let g = glb_bytes(
+            r#"{"meshes":[{}],"materials":[{"pbrMetallicRoughness":{"baseColorTexture":{"index":0}},"normalTexture":{"index":1},"occlusionTexture":{"index":2}}]}"#,
+        );
+        let want = Require {
+            pbr: true,
+            ..Default::default()
+        };
+        let (ok, d) = glb(&g, want);
+        assert!(ok, "{d}");
+        assert!(d.contains("1 baseColor / 1 normal / 1 occlusion"));
+        let bare = glb_bytes(r#"{"meshes":[{}],"materials":[{}]}"#);
+        assert!(!glb(&bare, want).0);
     }
 
     #[test]
