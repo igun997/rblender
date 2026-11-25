@@ -31,6 +31,30 @@ NPZ = next((a for a in opts if a.endswith(".npz")), "refs3d/red_dragon_head.npz"
 FIT_ITERS = int(opts[opts.index("--fit") + 1]) if "--fit" in opts else 3
 FIT_SCHEDULE = [(0.05, FIT_ITERS), (0.035, FIT_ITERS), (0.025, FIT_ITERS)]  # coarse to fine handle spacing (m)
 FIT_DIRECTION = opts[opts.index("--direction") + 1] if "--direction" in opts else "closest"
+PALETTES = opts[opts.index("--palettes") + 1].split(",") if "--palettes" in opts else ["ember", "emerald", "frost", "obsidian"]
+# linear RGB. grade: lift (shadows) / gamma (mids) / gain (highlights) per channel, saturation, contrast
+PALETTE_DEFS = {
+    "ember": dict(top=(0.06, 0.008, 0.004), side=(0.30, 0.035, 0.012), belly=(0.80, 0.40, 0.10), grout=(0.015, 0.003, 0.002),
+                  glow=0.30, glow_color=(1.0, 0.25, 0.02), rough_plate=0.35, rough_grout=0.8, tint=0.35, mottle=0.30,
+                  horn_root=(0.05, 0.04, 0.035), horn_mid=(0.25, 0.19, 0.14), horn_tip=(0.75, 0.65, 0.50), eye=(1.0, 0.75, 0.08),
+                  lights=dict(Key=(1.0, 0.82, 0.65), Rim=(1.0, 0.50, 0.30)),
+                  grade=dict(lift=(0.015, 0.0, -0.01), gamma=(1.0, 0.97, 0.93), gain=(1.08, 0.98, 0.88), saturation=1.15, contrast=0.10)),
+    "emerald": dict(top=(0.012, 0.045, 0.03), side=(0.045, 0.15, 0.06), belly=(0.42, 0.33, 0.10), grout=(0.008, 0.02, 0.012),
+                    glow=0.0, rough_plate=0.38, rough_grout=0.8, tint=0.40, mottle=0.30,
+                    horn_root=(0.06, 0.05, 0.035), horn_mid=(0.28, 0.24, 0.16), horn_tip=(0.72, 0.68, 0.52), eye=(1.0, 0.55, 0.05),
+                    lights=dict(Key=(1.0, 0.93, 0.80), Rim=(0.70, 0.90, 1.0)),
+                    grade=dict(lift=(-0.01, 0.01, 0.02), gamma=(1.0, 1.0, 1.0), gain=(1.05, 1.0, 0.90), saturation=1.10, contrast=0.08)),
+    "frost": dict(top=(0.08, 0.17, 0.30), side=(0.25, 0.45, 0.70), belly=(0.80, 0.90, 0.97), grout=(0.02, 0.05, 0.10),
+                  glow=0.25, glow_color=(0.3, 0.7, 1.0), rough_plate=0.22, rough_grout=0.7, tint=0.25, mottle=0.25,
+                  horn_root=(0.30, 0.45, 0.55), horn_mid=(0.55, 0.75, 0.88), horn_tip=(0.90, 0.97, 1.0), eye=(0.4, 0.9, 1.0),
+                  lights=dict(Key=(0.85, 0.92, 1.0), Rim=(0.6, 0.8, 1.0)),
+                  grade=dict(lift=(0.0, 0.01, 0.03), gamma=(1.0, 1.0, 1.02), gain=(0.90, 1.0, 1.10), saturation=0.95, contrast=0.05)),
+    "obsidian": dict(top=(0.006, 0.006, 0.008), side=(0.02, 0.02, 0.03), belly=(0.10, 0.06, 0.04), grout=(0.30, 0.10, 0.02),
+                     glow=0.80, glow_color=(1.0, 0.35, 0.05), rough_plate=0.22, rough_grout=0.7, tint=0.20, mottle=0.20,
+                     horn_root=(0.02, 0.02, 0.02), horn_mid=(0.08, 0.05, 0.04), horn_tip=(0.50, 0.35, 0.15), eye=(1.0, 0.85, 0.2),
+                     lights=dict(Key=(1.0, 0.90, 0.80), Rim=(1.0, 0.45, 0.20)),
+                     grade=dict(lift=(0.0, 0.0, 0.0), gamma=(1.0, 0.98, 0.95), gain=(1.12, 1.0, 0.92), saturation=1.10, contrast=0.15)),
+}
 NORENDER = "--no-render" in opts
 S = 0.25          # metres per glb unit (puts the head at about 0.6 m)
 PPM = 700         # silhouette pixels per metre
@@ -502,6 +526,32 @@ if not NORENDER:
     prec.contact_sheet(outs[:3], rb.out("ref3d_model.png"))
     prec.contact_sheet(outs[3:], rb.out("ref3d_target.png"))
     lap("render")
+
+    # ---- texturing and colour balance: one procedural material set, light colour and compositor grade per palette
+    horn_r = np.linalg.norm(Cc, axis=1)
+    skin_parts = [skull, jaw]
+    horn_parts = [horn] + [sp["obj"] for sp in SPIKES]
+    pal_tiles, first_views = [], []
+    for pname in PALETTES:
+        pal = PALETTE_DEFS[pname]
+        m_skin = prec.scale_skin_material(f"Skin_{pname}", pal)
+        m_horn = prec.horn_material(f"Horn_{pname}", pal, r0=float(horn_r.min()), r1=float(horn_r.max()))
+        m_eye = prec.glow_eye_material(f"Eye_{pname}", pal["eye"])
+        for ob, m in [(o, m_skin) for o in skin_parts] + [(o, m_horn) for o in horn_parts] + [(eye, m_eye)]:
+            ob.data.materials.clear()
+            ob.data.materials.append(m)
+        for lname, col in pal["lights"].items():
+            lo = bpy.data.objects.get(lname)
+            if lo is not None:
+                lo.data.color = col
+        prec.set_grade(sc, **pal["grade"])
+        pal_tiles.append(shot(f"_p_{pname}.png", cams["hero"], res=(720, 720), samples=40))
+        if pname == PALETTES[0]:
+            first_views = [pal_tiles[-1], shot(f"_p_{pname}_side.png", cams["side"], res=(720, 720), samples=40),
+                           shot(f"_p_{pname}_front.png", cams["front"], res=(720, 720), samples=40)]
+    prec.contact_sheet(pal_tiles, rb.out("ref3d_palettes.png"))
+    prec.contact_sheet(first_views, rb.out("ref3d_textured_views.png"))
+    lap("texture")
 
 # ------------------------------------------------------------------------------------------------ report
 spec = dict(unit_scale_m_per_glb_unit=S, head_length_m=LEN, skull_stations=ST_SKULL.tolist(), jaw_stations=ST_JAW.tolist(),

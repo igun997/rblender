@@ -188,6 +188,23 @@ Next steps I would try: an elliptical horn section with a taper profile, a Lapla
 instead of a roughness cap, fitting against a smoothed copy of the target, and building the frill as a half-loft of its
 own rather than as tubes.
 
+## Texturing and colour balance (`prec.scale_skin_material`, `prec.set_grade`)
+
+The tubes and spikes have no UVs, so the skin is procedural and needs none: Voronoi cells in object space are the
+scales (a distance-to-edge ramp gives plate vs grout), the body colour runs back, flank, belly with the world normal,
+every cell gets its own tint, a noise mottle breaks the repetition, grout is darker, rougher and may glow, and a bump
+follows the plates. Horns and spikes colour from root to tip with soft growth rings; eyes are emissive. Each
+palette sets those colours, the light colours, and a **compositor Color Balance** (lift for shadows, gamma for mids,
+gain for highlights) plus saturation and contrast. Four palettes render in one run
+(`--palettes ember,emerald,frost,obsidian`): `proof/ref3d/ref3d_palettes.png` and `ref3d_textured_views.png`.
+
+What the first pass got wrong and I fixed after looking at it: glowing grout (emission 1.2 to 2.0) and wide grout
+made the skin read as a lava net instead of scales (now 0.25 to 0.8 and 0.012 wide), and strong ring bump made the
+horns look like screws (contrast 0.22 to 0.10, bump 0.35 to 0.15). Colour is cheap to judge by eye, so judge it by eye.
+This texturing sits on the smooth but inaccurate 3D practice model, so it makes the render look better, not the
+shape more accurate; it is procedural (not baked), so it does not export to glTF as image maps. The baked PBR path is
+the 2D-reference dragon (`dragon_head.py`).
+
 ## Using it from an agent
 
 ```python

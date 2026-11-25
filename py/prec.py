@@ -855,6 +855,170 @@ def vertex_color_material(name, layer, rough=0.6):
     return m
 
 
+# ----------------------------------------------------------------------------- procedural skin and colour balance
+def _node(nt, kind, **props):
+    n = nt.nodes.new(kind)
+    for k, v in props.items():
+        setattr(n, k, v)
+    return n
+
+
+def _ramp(nt, stops, interp="LINEAR"):
+    n = nt.nodes.new("ShaderNodeValToRGB")
+    r = n.color_ramp
+    r.interpolation = interp
+    while len(r.elements) < len(stops):
+        r.elements.new(0.5)
+    for el, (p, c) in zip(r.elements, stops):
+        el.position = p
+        el.color = (*c[:3], 1.0)
+    return n
+
+
+def scale_skin_material(name, pal, cell=0.018, bump=0.6):
+    """Procedural scaled skin (no UVs needed, works on tubes too). Voronoi cells are the scales; the body colour runs
+    from back to belly with the world normal; every cell gets its own tint; grout is darker, rougher and may glow.
+    pal keys: top, side, belly, grout (RGB), rough_plate, rough_grout, glow (emission strength in the grout, 0 = none),
+    tint (per-cell colour variation 0..1), mottle (large-scale value variation 0..1)."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial")
+    bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
+    tc = _node(nt, "ShaderNodeTexCoord")
+    edge = _node(nt, "ShaderNodeTexVoronoi", voronoi_dimensions="3D", feature="DISTANCE_TO_EDGE")
+    cellv = _node(nt, "ShaderNodeTexVoronoi", voronoi_dimensions="3D", feature="F1")
+    for v in (edge, cellv):
+        v.inputs["Scale"].default_value = 1.0 / cell
+        v.inputs["Randomness"].default_value = 1.0
+        nt.links.new(tc.outputs["Object"], v.inputs["Vector"])
+    plate = _ramp(nt, [(pal.get("grout_w", 0.012), (0, 0, 0)), (pal.get("grout_w", 0.012) + 0.07, (1, 1, 1))])  # 0 grout, 1 plate
+    nt.links.new(edge.outputs["Distance"], plate.inputs["Fac"])
+    geo = _node(nt, "ShaderNodeNewGeometry")
+    sep = _node(nt, "ShaderNodeSeparateXYZ")
+    nt.links.new(geo.outputs["Normal"], sep.inputs["Vector"])
+    up = _node(nt, "ShaderNodeMath", operation="MULTIPLY_ADD")
+    nt.links.new(sep.outputs["Z"], up.inputs[0])
+    up.inputs[1].default_value = 0.5
+    up.inputs[2].default_value = 0.5
+    body = _ramp(nt, [(0.0, pal["belly"]), (0.34, pal["belly"]), (0.52, pal["side"]), (0.80, pal["top"]), (1.0, pal["top"])])
+    nt.links.new(up.outputs["Value"], body.inputs["Fac"])
+    tint = _node(nt, "ShaderNodeMixRGB", blend_type="MULTIPLY")
+    tint.inputs["Fac"].default_value = pal.get("tint", 0.35)
+    nt.links.new(body.outputs["Color"], tint.inputs["Color1"])
+    nt.links.new(cellv.outputs["Color"], tint.inputs["Color2"])
+    noise = _node(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
+    noise.inputs["Scale"].default_value = 5.0
+    noise.inputs["Detail"].default_value = 4.0
+    nt.links.new(tc.outputs["Object"], noise.inputs["Vector"])
+    mot = _node(nt, "ShaderNodeMixRGB", blend_type="MULTIPLY")
+    mot.inputs["Fac"].default_value = pal.get("mottle", 0.25)
+    nt.links.new(tint.outputs["Color"], mot.inputs["Color1"])
+    nt.links.new(noise.outputs["Color"], mot.inputs["Color2"])
+    skin = _node(nt, "ShaderNodeMixRGB", blend_type="MIX")
+    nt.links.new(plate.outputs["Color"], skin.inputs["Fac"])
+    skin.inputs["Color1"].default_value = (*pal["grout"][:3], 1.0)
+    nt.links.new(mot.outputs["Color"], skin.inputs["Color2"])
+    nt.links.new(skin.outputs["Color"], bsdf.inputs["Base Color"])
+    bw = _node(nt, "ShaderNodeRGBToBW")
+    nt.links.new(plate.outputs["Color"], bw.inputs["Color"])
+    rough = _node(nt, "ShaderNodeMapRange")
+    rough.inputs["To Min"].default_value = pal.get("rough_grout", 0.8)
+    rough.inputs["To Max"].default_value = pal.get("rough_plate", 0.38)
+    nt.links.new(bw.outputs["Val"], rough.inputs["Value"])
+    nt.links.new(rough.outputs["Result"], bsdf.inputs["Roughness"])
+    bp = _node(nt, "ShaderNodeBump")
+    bp.inputs["Strength"].default_value = bump
+    bp.inputs["Distance"].default_value = 0.004
+    nt.links.new(bw.outputs["Val"], bp.inputs["Height"])
+    nt.links.new(bp.outputs["Normal"], bsdf.inputs["Normal"])
+    if "Specular IOR Level" in bsdf.inputs:
+        bsdf.inputs["Specular IOR Level"].default_value = pal.get("spec", 0.5)
+    if pal.get("glow", 0.0) > 0:
+        inv = _node(nt, "ShaderNodeMath", operation="SUBTRACT")
+        inv.inputs[0].default_value = 1.0
+        nt.links.new(bw.outputs["Val"], inv.inputs[1])
+        gl = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+        gl.inputs[1].default_value = pal["glow"]
+        nt.links.new(inv.outputs["Value"], gl.inputs[0])
+        bsdf.inputs["Emission Color"].default_value = (*pal.get("glow_color", pal["grout"])[:3], 1.0)
+        nt.links.new(gl.outputs["Value"], bsdf.inputs["Emission Strength"])
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return m
+
+
+def horn_material(name, pal, r0=0.12, r1=0.5):
+    """Horn/spike colour from root to tip (distance from the object origin), with growth rings (bump)."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial")
+    bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
+    tc = _node(nt, "ShaderNodeTexCoord")
+    ln = _node(nt, "ShaderNodeVectorMath", operation="LENGTH")
+    nt.links.new(tc.outputs["Object"], ln.inputs[0])
+    mr = _node(nt, "ShaderNodeMapRange")
+    mr.inputs["From Min"].default_value = r0
+    mr.inputs["From Max"].default_value = r1
+    nt.links.new(ln.outputs["Value"], mr.inputs["Value"])
+    ramp = _ramp(nt, [(0.0, pal["horn_root"]), (0.55, pal["horn_mid"]), (1.0, pal["horn_tip"])])
+    nt.links.new(mr.outputs["Result"], ramp.inputs["Fac"])
+    wave = _node(nt, "ShaderNodeTexWave", wave_type="BANDS", bands_direction="Y")
+    wave.inputs["Scale"].default_value = 55.0
+    wave.inputs["Distortion"].default_value = 1.6
+    nt.links.new(tc.outputs["Object"], wave.inputs["Vector"])
+    ring = _node(nt, "ShaderNodeMixRGB", blend_type="MULTIPLY")
+    ring.inputs["Fac"].default_value = 0.10
+    nt.links.new(ramp.outputs["Color"], ring.inputs["Color1"])
+    nt.links.new(wave.outputs["Color"], ring.inputs["Color2"])
+    nt.links.new(ring.outputs["Color"], bsdf.inputs["Base Color"])
+    bp = _node(nt, "ShaderNodeBump")
+    bp.inputs["Strength"].default_value = 0.15
+    bp.inputs["Distance"].default_value = 0.003
+    nt.links.new(wave.outputs["Fac"], bp.inputs["Height"])
+    nt.links.new(bp.outputs["Normal"], bsdf.inputs["Normal"])
+    bsdf.inputs["Roughness"].default_value = pal.get("horn_rough", 0.42)
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return m
+
+
+def glow_eye_material(name, color, strength=2.5):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = m.node_tree.nodes["Principled BSDF"]
+    b.inputs["Base Color"].default_value = (*color[:3], 1.0)
+    b.inputs["Roughness"].default_value = 0.15
+    b.inputs["Emission Color"].default_value = (*color[:3], 1.0)
+    b.inputs["Emission Strength"].default_value = strength
+    return m
+
+
+def set_grade(scene, lift=(0, 0, 0), gamma=(1, 1, 1), gain=(1, 1, 1), saturation=1.0, contrast=0.0):
+    """Colour balance in the compositor: lift (shadows), gamma (mids), gain (highlights) per channel, then saturation
+    and contrast. Rendering applies it (render.use_compositing)."""
+    scene.use_nodes = True
+    nt = scene.node_tree
+    nt.nodes.clear()
+    rl = nt.nodes.new("CompositorNodeRLayers")
+    cb = nt.nodes.new("CompositorNodeColorBalance")
+    cb.correction_method = "LIFT_GAMMA_GAIN"
+    cb.lift = tuple(1.0 + x for x in lift)
+    cb.gamma = tuple(gamma)
+    cb.gain = tuple(gain)
+    hs = nt.nodes.new("CompositorNodeHueSat")
+    hs.inputs["Saturation"].default_value = saturation
+    bc = nt.nodes.new("CompositorNodeBrightContrast")
+    bc.inputs["Contrast"].default_value = contrast
+    comp = nt.nodes.new("CompositorNodeComposite")
+    nt.links.new(rl.outputs["Image"], cb.inputs["Image"])
+    nt.links.new(cb.outputs["Image"], hs.inputs["Image"])
+    nt.links.new(hs.outputs["Image"], bc.inputs["Image"])
+    nt.links.new(bc.outputs["Image"], comp.inputs["Image"])
+    scene.render.use_compositing = True
+
+
 # ----------------------------------------------------------------------------- Mirror modifier
 def add_mirror(ob, axis=0, merge=True, clip=True, mirror_u=True, threshold=1e-5):
     """Model one half, let Blender's Mirror modifier produce the other (exact symmetry by construction)."""

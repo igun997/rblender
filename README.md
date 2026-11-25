@@ -247,6 +247,13 @@ Limits: the reference is a side-view skull drawing, so width is an assumption, t
 ![ref3d model](proof/ref3d/ref3d_model.png)
 ![ref3d target](proof/ref3d/ref3d_target.png)
 
+**Texturing and colour balance** on that model: procedural scales (no UVs needed), back-to-belly gradient, per-scale tint, glowing grout, root-to-tip horns, and a per-palette lift/gamma/gain in Blender's compositor. `--palettes ember,emerald,frost,obsidian`:
+
+![palettes](proof/ref3d/ref3d_palettes.png)
+![ember views](proof/ref3d/ref3d_textured_views.png)
+
+It makes the render look better, not the shape more accurate, and it is procedural, so it does not export as glTF image maps (the baked PBR path is the 2D-reference dragon above).
+
 The useful part is what the loop exposed: silhouette IoU and Chamfer distance were satisfied by a crumpled surface, per-vertex distance flattered the fit (2 mm against 9.8 mm on the sampled surface), and the first "smooth" setting only passed because it barely moved the mesh. Details and numbers are in `docs/PRECISION.md`.
 
 Paste this to have an agent do the same for something else:
