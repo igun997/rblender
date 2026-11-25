@@ -263,6 +263,22 @@ The eyes are the target's own 12.7 mm radius, so they are small in a hero shot. 
 
 **glb:** the run also writes `out/dragon_ref3d.glb` (2 MB, 18 meshes, 53,632 vertices, Mirror applied, flat PBR colours from the first palette; the procedural scales, eyes and breath do not export). `rblender run scenes/check_glb.py -- exports/dragon_ref3d.glb` re-imports it in a fresh Blender: x range -0.382 to 0.382 m, size 0.764 x 0.889 x 0.806 m. The file is not committed (derived from a CC-BY target); regenerate it with the command above.
 
+**Rigging and fire breath video** (`characters/dragon_fire.py`): a neck is added, then 12 bones (root, neck1-4, head, jaw, tongue1-3, eyes) with skin weights computed in code (0 vertices unweighted; 30 degrees of jaw lowers the lower teeth 23 cm), procedural scales that stay glued to the skin while it deforms, and a 7 second animation: the dragon rears back with a glow in its mouth, snaps forward, breathes fire with embers and a flickering light, and settles. EEVEE, 1280 x 720, 168 frames, a synthesised soundtrack. [Watch `proof/fire/dragon_fire.mp4`](proof/fire/dragon_fire.mp4).
+
+![fire peak](proof/fire/fire_peak.png)
+![fire sequence](proof/fire/fire_sheet.png)
+
+```
+rblender run characters/dragon_ref3d.py -- refs3d/red_dragon_head.npz --no-render   # model + rig data
+cp out/dragon_ref3d_model.blend out/dragon_ref3d_rig.json exports/
+rblender run characters/dragon_fire.py -- --export --no-render                      # rigged .blend + glb (12 joints, 1 animation)
+rblender run characters/dragon_fire.py                                              # JPEG sequence + wav, about 79 min on 4 vCPU
+ffmpeg -framerate 24 -i out/frames/f_%04d.jpg -i out/dragon_fire_audio.wav -c:v libx264 -crf 16 -pix_fmt yuv420p \
+  -af "loudnorm=I=-18:TP=-3,alimiter=limit=0.85" -c:a aac -movflags +faststart out/dragon_fire.mp4
+```
+
+Honest limits: the flame reads as a smoky orange stream more than a blast; the head is small in the late frames; the boulders are low-poly; the neck is a plain tube and there is no body. The rigged glb has flat colours and no fire (procedural shaders and volumes do not export); its animation is baked per frame. I cannot listen to the soundtrack: I checked its levels per second (quiet start, peak 3 to 5 s) and normalised it, nothing more. The full render took 79 minutes and the local `rblender run` client disconnected after 37 minutes while Blender kept rendering on the box; the frames were pulled afterwards with `rblender pull`.
+
 The useful part is what the loop exposed: silhouette IoU and Chamfer distance were satisfied by a crumpled surface, per-vertex distance flattered the fit (2 mm against 9.8 mm on the sampled surface), and the first "smooth" setting only passed because it barely moved the mesh. Details and numbers are in `docs/PRECISION.md`.
 
 Paste this to have an agent do the same for something else:

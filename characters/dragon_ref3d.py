@@ -32,41 +32,7 @@ FIT_ITERS = int(opts[opts.index("--fit") + 1]) if "--fit" in opts else 3
 FIT_SCHEDULE = [(0.05, FIT_ITERS), (0.035, FIT_ITERS), (0.025, FIT_ITERS)]  # coarse to fine handle spacing (m)
 FIT_DIRECTION = opts[opts.index("--direction") + 1] if "--direction" in opts else "closest"
 PALETTES = opts[opts.index("--palettes") + 1].split(",") if "--palettes" in opts else ["ember", "emerald", "frost", "obsidian"]
-# linear RGB. grade: lift (shadows) / gamma (mids) / gain (highlights) per channel, saturation, contrast
-PALETTE_DEFS = {
-    "ember": dict(top=(0.06, 0.008, 0.004), side=(0.30, 0.035, 0.012), belly=(0.80, 0.40, 0.10), grout=(0.015, 0.003, 0.002),
-                  glow=0.30, glow_color=(1.0, 0.25, 0.02), rough_plate=0.35, rough_grout=0.8, tint=0.35, mottle=0.30,
-                  horn_root=(0.05, 0.04, 0.035), horn_mid=(0.25, 0.19, 0.14), horn_tip=(0.75, 0.65, 0.50), eye=(1.0, 0.75, 0.08),
-                  lights=dict(Key=(1.0, 0.82, 0.65), Rim=(1.0, 0.50, 0.30)),
-                  grade=dict(lift=(0.015, 0.0, -0.01), gamma=(1.0, 0.97, 0.93), gain=(1.08, 0.98, 0.88), saturation=1.15, contrast=0.10)),
-    "emerald": dict(top=(0.012, 0.045, 0.03), side=(0.045, 0.15, 0.06), belly=(0.42, 0.33, 0.10), grout=(0.008, 0.02, 0.012),
-                    glow=0.0, rough_plate=0.38, rough_grout=0.8, tint=0.40, mottle=0.30,
-                    horn_root=(0.06, 0.05, 0.035), horn_mid=(0.28, 0.24, 0.16), horn_tip=(0.72, 0.68, 0.52), eye=(1.0, 0.55, 0.05),
-                    lights=dict(Key=(1.0, 0.93, 0.80), Rim=(0.70, 0.90, 1.0)),
-                    grade=dict(lift=(-0.01, 0.01, 0.02), gamma=(1.0, 1.0, 1.0), gain=(1.05, 1.0, 0.90), saturation=1.10, contrast=0.08)),
-    "frost": dict(top=(0.08, 0.17, 0.30), side=(0.25, 0.45, 0.70), belly=(0.80, 0.90, 0.97), grout=(0.02, 0.05, 0.10),
-                  glow=0.25, glow_color=(0.3, 0.7, 1.0), rough_plate=0.22, rough_grout=0.7, tint=0.25, mottle=0.25,
-                  horn_root=(0.30, 0.45, 0.55), horn_mid=(0.55, 0.75, 0.88), horn_tip=(0.90, 0.97, 1.0), eye=(0.4, 0.9, 1.0),
-                  lights=dict(Key=(0.85, 0.92, 1.0), Rim=(0.6, 0.8, 1.0)),
-                  grade=dict(lift=(0.0, 0.01, 0.03), gamma=(1.0, 1.0, 1.02), gain=(0.90, 1.0, 1.10), saturation=0.95, contrast=0.05)),
-    "obsidian": dict(top=(0.006, 0.006, 0.008), side=(0.02, 0.02, 0.03), belly=(0.10, 0.06, 0.04), grout=(0.30, 0.10, 0.02),
-                     glow=0.80, glow_color=(1.0, 0.35, 0.05), rough_plate=0.22, rough_grout=0.7, tint=0.20, mottle=0.20,
-                     horn_root=(0.02, 0.02, 0.02), horn_mid=(0.08, 0.05, 0.04), horn_tip=(0.50, 0.35, 0.15), eye=(1.0, 0.85, 0.2),
-                     lights=dict(Key=(1.0, 0.90, 0.80), Rim=(1.0, 0.45, 0.20)),
-                     grade=dict(lift=(0.0, 0.0, 0.0), gamma=(1.0, 0.98, 0.95), gain=(1.12, 1.0, 0.92), saturation=1.10, contrast=0.15)),
-}
-DETAIL_PAL = {
-    "ember": dict(mouth=(0.35, 0.09, 0.07), tooth=(0.90, 0.85, 0.70), eye_glow=1.4,
-                  breath=dict(ramp=[(0.15, 0.01, 0.0), (1.0, 0.22, 0.02), (1.0, 0.65, 0.12), (1.0, 0.95, 0.70)], density=18.0, emission=7.0, light=(1.0, 0.45, 0.12))),
-    "emerald": dict(mouth=(0.34, 0.12, 0.11), tooth=(0.85, 0.82, 0.65), eye_glow=1.2,
-                    breath=dict(ramp=[(0.02, 0.08, 0.0), (0.15, 0.60, 0.05), (0.55, 0.95, 0.20), (0.90, 1.0, 0.60)], density=14.0, emission=4.0, light=(0.5, 1.0, 0.2))),
-    "frost": dict(mouth=(0.55, 0.30, 0.40), tooth=(0.95, 0.98, 1.0), eye_glow=1.6,
-                  breath=dict(ramp=[(0.10, 0.25, 0.40), (0.40, 0.75, 1.0), (0.80, 0.95, 1.0), (1.0, 1.0, 1.0)], density=12.0, emission=3.0, light=(0.5, 0.8, 1.0))),
-    "obsidian": dict(mouth=(0.20, 0.03, 0.035), tooth=(0.20, 0.18, 0.16), eye_glow=1.6,
-                     breath=dict(ramp=[(0.10, 0.0, 0.0), (0.90, 0.12, 0.0), (1.0, 0.50, 0.05), (1.0, 0.85, 0.40)], density=22.0, emission=9.0, light=(1.0, 0.35, 0.05))),
-}
-for _k, _v in DETAIL_PAL.items():
-    PALETTE_DEFS[_k].update(_v)
+PALETTE_DEFS = prec.DRAGON_PALETTES  # shared with characters/dragon_fire.py
 NORENDER = "--no-render" in opts
 S = 0.25          # metres per glb unit (puts the head at about 0.6 m)
 PPM = 700         # silhouette pixels per metre
@@ -668,6 +634,22 @@ GLB = rb.export("dragon_ref3d.glb", use_selection=True, export_apply=True)
 DETAILS["glb"] = dict(file="dragon_ref3d.glb", bytes=os.path.getsize(GLB), objects=len(_gl_assign), materials="flat PBR colours from the first palette")
 print("GLB", json.dumps(DETAILS["glb"]), flush=True)
 lap("glb")
+
+# the animation script loads these two files: the model (no targets) and the joint data measured above
+_keep = set([skull, jaw, horn, tongue] + [sp["obj"] for sp in SPIKES] + TEETH + EYES + LIDS)
+_blend = rb.out("dragon_ref3d_model.blend")
+bpy.data.libraries.write(_blend, _keep, fake_user=True)
+_hinge = origin_j + ST_JAW[-1, 0] * ut
+RIG = dict(
+    skull_back=dict(y=float(ST_SKULL[-1, 0]), w=float(ST_SKULL[-1, 1]), zt=float(ST_SKULL[-1, 2]), zb=float(ST_SKULL[-1, 3])),
+    skull_front_y=float(ST_SKULL[0, 0]),
+    jaw=dict(hinge_yz=[float(_hinge[0]), float(_hinge[1])], tip_yz=origin_j.tolist(), axis_yz=ut.tolist(), normal_yz=nv.tolist()),
+    tongue=dict(origin_yz=_tf[0].tolist(), axis_yz=_tf[1].tolist(), length=float(ST_TONGUE[-1, 0] - ST_TONGUE[0, 0])),
+    eyes=[dict(centre=list(map(float, e.location)), gaze=g.tolist(), radius=float(er)) for e, (g, _h, _u) in zip(EYES, EYE_FRAMES)],
+    mouth_c=MOUTH_C.tolist(), spikes=[o.name for o in [sp["obj"] for sp in SPIKES]], teeth=[o.name for o in TEETH], head_len=float(LEN))
+with open(rb.out("dragon_ref3d_rig.json"), "w") as fh:
+    json.dump(RIG, fh, indent=1)
+DETAILS["blend"] = dict(file="dragon_ref3d_model.blend", bytes=os.path.getsize(_blend))
 
 # ------------------------------------------------------------------------------------------------ checks
 w = sc3["whole"]

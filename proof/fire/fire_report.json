@@ -1,0 +1,91 @@
+{
+ "rows": [
+  {
+   "group": "rig",
+   "name": "vertices without a skin weight",
+   "measured": 0,
+   "target": 0,
+   "tol": 0,
+   "unit": "",
+   "err": 0,
+   "ok": true
+  },
+  {
+   "group": "rig",
+   "name": "bones",
+   "measured": 12,
+   "target": 12,
+   "tol": 0,
+   "unit": "",
+   "err": 0,
+   "ok": true
+  },
+  {
+   "group": "rig",
+   "name": "30 degrees of jaw lowers the lower teeth (cm)",
+   "measured": 22.98235595226288,
+   "target": ">= 5.0",
+   "tol": "",
+   "unit": "",
+   "err": "",
+   "ok": true
+  },
+  {
+   "group": "rig",
+   "name": "30 degrees of raise lifts the nose (cm)",
+   "measured": 58.000849187374115,
+   "target": ">= 10.0",
+   "tol": "",
+   "unit": "",
+   "err": "",
+   "ok": true
+  },
+  {
+   "group": "rig",
+   "name": "armature modifier after the mirror on every skinned mesh",
+   "measured": "",
+   "target": "",
+   "tol": "",
+   "unit": "",
+   "err": "",
+   "ok": true
+  },
+  {
+   "group": "animation",
+   "name": "pose keys on every bone",
+   "measured": "39 curves",
+   "target": "",
+   "tol": "",
+   "unit": "",
+   "err": "",
+   "ok": true
+  },
+  {
+   "group": "animation",
+   "name": "fire intensity, front, light and eye glow are keyed",
+   "measured": "",
+   "target": "",
+   "tol": "",
+   "unit": "",
+   "err": "",
+   "ok": true
+  }
+ ],
+ "ok": true,
+ "log": {
+  "seconds": {
+   "model": 0.1,
+   "rig": 0.2,
+   "pose_test": 0.2,
+   "animation": 0.3,
+   "video": 4720.7
+  }
+ },
+ "frames": 168,
+ "fps": 24,
+ "res": [
+  1280,
+  720
+ ],
+ "palette": "ember"
+}

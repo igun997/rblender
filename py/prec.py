@@ -875,7 +875,31 @@ def _ramp(nt, stops, interp="LINEAR"):
     return n
 
 
-def scale_skin_material(name, pal, cell=0.018, bump=0.6):
+class _Coord:
+    """Stand-in for a TexCoord node whose 'Object' output is some other vector socket."""
+
+    def __init__(self, socket):
+        self.outputs = {"Object": socket}
+
+
+def _tc(nt, orco):
+    """Texture coordinates. orco=None: the Object coordinate (it follows the DEFORMED mesh, so a texture swims when an
+    armature moves the surface). orco='rest': read the rest position stored with add_rest_attribute() instead."""
+    if orco:
+        a = _node(nt, "ShaderNodeAttribute", attribute_name=orco, attribute_type="GEOMETRY")
+        return _Coord(a.outputs["Vector"])
+    return _node(nt, "ShaderNodeTexCoord")
+
+
+def add_rest_attribute(ob, name="rest"):
+    """Store every vertex's rest position (mesh-local) as a colour attribute, so a procedural material can stay glued to
+    the surface while an armature deforms it. A Mirror modifier copies the attribute, so the pattern comes out symmetric."""
+    P = coords(ob)
+    ca = ob.data.color_attributes.new(name, "FLOAT_COLOR", "POINT")
+    ca.data.foreach_set("color", np.column_stack([P, np.ones(len(P))]).astype(np.float32).ravel())
+
+
+def scale_skin_material(name, pal, cell=0.018, bump=0.6, orco=None):
     """Procedural scaled skin (no UVs needed, works on tubes too). Voronoi cells are the scales; the body colour runs
     from back to belly with the world normal; every cell gets its own tint; grout is darker, rougher and may glow.
     pal keys: top, side, belly, grout (RGB), rough_plate, rough_grout, glow (emission strength in the grout, 0 = none),
@@ -886,7 +910,7 @@ def scale_skin_material(name, pal, cell=0.018, bump=0.6):
     nt.nodes.clear()
     out = _node(nt, "ShaderNodeOutputMaterial")
     bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
-    tc = _node(nt, "ShaderNodeTexCoord")
+    tc = _tc(nt, orco)
     edge = _node(nt, "ShaderNodeTexVoronoi", voronoi_dimensions="3D", feature="DISTANCE_TO_EDGE")
     cellv = _node(nt, "ShaderNodeTexVoronoi", voronoi_dimensions="3D", feature="F1")
     for v in (edge, cellv):
@@ -948,7 +972,7 @@ def scale_skin_material(name, pal, cell=0.018, bump=0.6):
     return m
 
 
-def horn_material(name, pal, r0=0.12, r1=0.5):
+def horn_material(name, pal, r0=0.12, r1=0.5, orco=None):
     """Horn/spike colour from root to tip (distance from the object origin), with growth rings (bump)."""
     m = bpy.data.materials.new(name)
     m.use_nodes = True
@@ -956,7 +980,7 @@ def horn_material(name, pal, r0=0.12, r1=0.5):
     nt.nodes.clear()
     out = _node(nt, "ShaderNodeOutputMaterial")
     bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
-    tc = _node(nt, "ShaderNodeTexCoord")
+    tc = _tc(nt, orco)
     ln = _node(nt, "ShaderNodeVectorMath", operation="LENGTH")
     nt.links.new(tc.outputs["Object"], ln.inputs[0])
     mr = _node(nt, "ShaderNodeMapRange")
@@ -995,7 +1019,7 @@ def glow_eye_material(name, color, strength=2.5):
     return m
 
 
-def set_grade(scene, lift=(0, 0, 0), gamma=(1, 1, 1), gain=(1, 1, 1), saturation=1.0, contrast=0.0):
+def set_grade(scene, lift=(0, 0, 0), gamma=(1, 1, 1), gain=(1, 1, 1), saturation=1.0, contrast=0.0, glare=None):
     """Colour balance in the compositor: lift (shadows), gamma (mids), gain (highlights) per channel, then saturation
     and contrast. Rendering applies it (render.use_compositing)."""
     scene.use_nodes = True
@@ -1012,14 +1036,24 @@ def set_grade(scene, lift=(0, 0, 0), gamma=(1, 1, 1), gain=(1, 1, 1), saturation
     bc = nt.nodes.new("CompositorNodeBrightContrast")
     bc.inputs["Contrast"].default_value = contrast
     comp = nt.nodes.new("CompositorNodeComposite")
-    nt.links.new(rl.outputs["Image"], cb.inputs["Image"])
+    if glare:  # bloom for fire and glowing eyes: dict(threshold, size, mix)
+        gl = nt.nodes.new("CompositorNodeGlare")
+        gl.glare_type = "FOG_GLOW"
+        gl.threshold = glare.get("threshold", 0.8)
+        gl.size = glare.get("size", 7)
+        gl.mix = glare.get("mix", -0.3)
+        gl.quality = "MEDIUM"
+        nt.links.new(rl.outputs["Image"], gl.inputs["Image"])
+        nt.links.new(gl.outputs["Image"], cb.inputs["Image"])
+    else:
+        nt.links.new(rl.outputs["Image"], cb.inputs["Image"])
     nt.links.new(cb.outputs["Image"], hs.inputs["Image"])
     nt.links.new(hs.outputs["Image"], bc.inputs["Image"])
     nt.links.new(bc.outputs["Image"], comp.inputs["Image"])
     scene.render.use_compositing = True
 
 
-def eye_material(name, pal, gaze, horiz, up, radius):
+def eye_material(name, pal, gaze, horiz, up, radius, orco=None):
     """Procedural reptile eye in the eye object's own coordinates (object origin = eye centre). gaze/horiz/up are the
     orthonormal axes of the eye. Sclera, a fibrous iris with a dark limbal ring, a vertical slit pupil, emission.
     pal keys: eye (iris colour), sclera, eye_glow."""
@@ -1029,7 +1063,7 @@ def eye_material(name, pal, gaze, horiz, up, radius):
     nt.nodes.clear()
     out = _node(nt, "ShaderNodeOutputMaterial")
     bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
-    tc = _node(nt, "ShaderNodeTexCoord")
+    tc = _tc(nt, orco)
 
     def dot(vec):
         n = _node(nt, "ShaderNodeVectorMath", operation="DOT_PRODUCT")
@@ -1104,7 +1138,13 @@ def eye_material(name, pal, gaze, horiz, up, radius):
     glow = _node(nt, "ShaderNodeMath", operation="SUBTRACT")
     nt.links.new(iris_mask.outputs["Value"], glow.inputs[0])
     nt.links.new(pupil.outputs["Value"], glow.inputs[1])
-    gl = mul(glow.outputs["Value"], None, pal.get("eye_glow", 1.2))
+    gl0 = mul(glow.outputs["Value"], None, pal.get("eye_glow", 1.2))
+    gain = _node(nt, "ShaderNodeValue")
+    gain.name = "EyeGlow"  # animatable multiplier
+    gain.outputs[0].default_value = 1.0
+    gl = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(gl0.outputs["Value"], gl.inputs[0])
+    nt.links.new(gain.outputs[0], gl.inputs[1])
     nt.links.new(iris.outputs["Color"], bsdf.inputs["Emission Color"])
     nt.links.new(gl.outputs["Value"], bsdf.inputs["Emission Strength"])
     bsdf.inputs["Roughness"].default_value = 0.08
@@ -1114,7 +1154,7 @@ def eye_material(name, pal, gaze, horiz, up, radius):
     return m
 
 
-def flesh_material(name, color, wet=0.25, vein=0.6):
+def flesh_material(name, color, wet=0.25, vein=0.6, orco=None):
     """Mouth flesh: base colour with a noise-driven vein/mottle variation, wet gloss, soft bump."""
     m = bpy.data.materials.new(name)
     m.use_nodes = True
@@ -1122,7 +1162,7 @@ def flesh_material(name, color, wet=0.25, vein=0.6):
     nt.nodes.clear()
     out = _node(nt, "ShaderNodeOutputMaterial")
     bsdf = _node(nt, "ShaderNodeBsdfPrincipled")
-    tc = _node(nt, "ShaderNodeTexCoord")
+    tc = _tc(nt, orco)
     nz = _node(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
     nz.inputs["Scale"].default_value = 28.0
     nz.inputs["Detail"].default_value = 7.0
@@ -1146,10 +1186,12 @@ def flesh_material(name, color, wet=0.25, vein=0.6):
     return m
 
 
-def breath_volume(name, origin, direction, length, r_end, pal, r_start=0.02):
-    """Flame, gas or mist as a Cycles volume inside a cone: density falls off along the length and towards the edge,
-    noise breaks it up, emission follows a heat ramp (hot core to cool tip). pal: ramp (4 colours), density,
-    emission, noise_scale. Returns the cone object; the volume only shows in a render."""
+def breath_volume(name, origin, direction, length, r_end, pal, r_start=0.02, flow_speed=0.0):
+    """Flame, gas or mist as a volume inside a cone: density falls off along the length and towards the edge, noise
+    breaks it up, emission follows a heat ramp (hot core to cool tip). pal: ramp (4 colours), density, emission,
+    noise_scale. Animatable controls are Value nodes: 'Intensity' (density and emission gain), 'Front' (0..1 is how far
+    along the cone the jet has reached; 2 = fully developed) and 'Flow' (the noise drifts along the jet; with
+    flow_speed > 0 a driver sets it to frame * flow_speed). Returns the cone object."""
     bm = bmesh.new()
     bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=36, radius1=r_start, radius2=r_end, depth=length)
     bmesh.ops.translate(bm, vec=(0, 0, length / 2), verts=bm.verts[:])
@@ -1194,25 +1236,60 @@ def breath_volume(name, origin, direction, length, r_end, pal, r_start=0.02):
     along.inputs["To Max"].default_value = 0.0
     along.clamp = True
     nt.links.new(t.outputs["Result"], along.inputs["Value"])
-    nz = _node(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
+    flow = _node(nt, "ShaderNodeValue")
+    flow.name = "Flow"
+    if flow_speed:
+        drv = flow.outputs[0].driver_add("default_value").driver
+        drv.type = "SCRIPTED"
+        drv.expression = f"frame*{flow_speed}"
+    shift = _node(nt, "ShaderNodeCombineXYZ")
+    nt.links.new(flow.outputs[0], shift.inputs["Z"])
+    moved = _node(nt, "ShaderNodeVectorMath", operation="SUBTRACT")
+    nt.links.new(tc.outputs["Object"], moved.inputs[0])
+    nt.links.new(shift.outputs["Vector"], moved.inputs[1])
+    nz = _node(nt, "ShaderNodeTexNoise", noise_dimensions="4D")
     nz.inputs["Scale"].default_value = pal.get("noise_scale", 9.0)
     nz.inputs["Detail"].default_value = 7.0
     nz.inputs["Distortion"].default_value = 1.2
-    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+    nt.links.new(moved.outputs["Vector"], nz.inputs["Vector"])
+    if flow_speed:
+        wd = nz.inputs["W"].driver_add("default_value").driver
+        wd.type = "SCRIPTED"
+        wd.expression = f"frame*{flow_speed * 0.35}"
     nzr = _node(nt, "ShaderNodeMapRange")
     nzr.inputs["From Min"].default_value = 0.40
     nzr.inputs["From Max"].default_value = 0.60
     nzr.clamp = True
     nt.links.new(nz.outputs["Fac"], nzr.inputs["Value"])
+    front = _node(nt, "ShaderNodeValue")
+    front.name = "Front"
+    front.outputs[0].default_value = 2.0
+    fd = _node(nt, "ShaderNodeMath", operation="SUBTRACT")
+    nt.links.new(front.outputs[0], fd.inputs[0])
+    nt.links.new(t.outputs["Result"], fd.inputs[1])
+    fm = _node(nt, "ShaderNodeMapRange")
+    fm.inputs["From Min"].default_value = 0.0
+    fm.inputs["From Max"].default_value = 0.14
+    fm.clamp = True
+    nt.links.new(fd.outputs["Value"], fm.inputs["Value"])
+    inten = _node(nt, "ShaderNodeValue")
+    inten.name = "Intensity"
+    inten.outputs[0].default_value = 1.0
+    shape0 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(core.outputs["Result"], shape0.inputs[0])
+    nt.links.new(along.outputs["Result"], shape0.inputs[1])
     shape = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
-    nt.links.new(core.outputs["Result"], shape.inputs[0])
-    nt.links.new(along.outputs["Result"], shape.inputs[1])
+    nt.links.new(shape0.outputs["Value"], shape.inputs[0])
+    nt.links.new(fm.outputs["Result"], shape.inputs[1])
     dens = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
     nt.links.new(shape.outputs["Value"], dens.inputs[0])
     nt.links.new(nzr.outputs["Result"], dens.inputs[1])
     dens2 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
     nt.links.new(dens.outputs["Value"], dens2.inputs[0])
     dens2.inputs[1].default_value = pal.get("density", 20.0)
+    dens3 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(dens2.outputs["Value"], dens3.inputs[0])
+    nt.links.new(inten.outputs[0], dens3.inputs[1])
     heat = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
     nt.links.new(shape.outputs["Value"], heat.inputs[0])
     nt.links.new(nzr.outputs["Result"], heat.inputs[1])
@@ -1226,11 +1303,46 @@ def breath_volume(name, origin, direction, length, r_end, pal, r_start=0.02):
     em = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
     nt.links.new(dens.outputs["Value"], em.inputs[0])
     em.inputs[1].default_value = pal.get("emission", 6.0)
-    nt.links.new(em.outputs["Value"], vol.inputs["Emission Strength"])
-    nt.links.new(dens2.outputs["Value"], vol.inputs["Density"])
+    em2 = _node(nt, "ShaderNodeMath", operation="MULTIPLY")
+    nt.links.new(em.outputs["Value"], em2.inputs[0])
+    nt.links.new(inten.outputs[0], em2.inputs[1])
+    nt.links.new(em2.outputs["Value"], vol.inputs["Emission Strength"])
+    nt.links.new(dens3.outputs["Value"], vol.inputs["Density"])
     nt.links.new(vol.outputs["Volume"], out.inputs["Volume"])
     ob.data.materials.append(m)
     return ob
+
+
+DRAGON_PALETTES = {
+    "ember": dict(top=(0.06, 0.008, 0.004), side=(0.30, 0.035, 0.012), belly=(0.80, 0.40, 0.10), grout=(0.015, 0.003, 0.002),
+                  glow=0.30, glow_color=(1.0, 0.25, 0.02), rough_plate=0.35, rough_grout=0.8, tint=0.35, mottle=0.30,
+                  horn_root=(0.05, 0.04, 0.035), horn_mid=(0.25, 0.19, 0.14), horn_tip=(0.75, 0.65, 0.50), eye=(1.0, 0.75, 0.08),
+                  mouth=(0.35, 0.09, 0.07), tooth=(0.90, 0.85, 0.70), eye_glow=1.4,
+                  lights=dict(Key=(1.0, 0.82, 0.65), Rim=(1.0, 0.50, 0.30)),
+                  grade=dict(lift=(0.015, 0.0, -0.01), gamma=(1.0, 0.97, 0.93), gain=(1.08, 0.98, 0.88), saturation=1.15, contrast=0.10),
+                  breath=dict(ramp=[(0.15, 0.01, 0.0), (1.0, 0.22, 0.02), (1.0, 0.65, 0.12), (1.0, 0.95, 0.70)], density=18.0, emission=7.0, light=(1.0, 0.45, 0.12))),
+    "emerald": dict(top=(0.012, 0.045, 0.03), side=(0.045, 0.15, 0.06), belly=(0.42, 0.33, 0.10), grout=(0.008, 0.02, 0.012),
+                    glow=0.0, rough_plate=0.38, rough_grout=0.8, tint=0.40, mottle=0.30,
+                    horn_root=(0.06, 0.05, 0.035), horn_mid=(0.28, 0.24, 0.16), horn_tip=(0.72, 0.68, 0.52), eye=(1.0, 0.55, 0.05),
+                    mouth=(0.34, 0.12, 0.11), tooth=(0.85, 0.82, 0.65), eye_glow=1.2,
+                    lights=dict(Key=(1.0, 0.93, 0.80), Rim=(0.70, 0.90, 1.0)),
+                    grade=dict(lift=(-0.01, 0.01, 0.02), gamma=(1.0, 1.0, 1.0), gain=(1.05, 1.0, 0.90), saturation=1.10, contrast=0.08),
+                    breath=dict(ramp=[(0.02, 0.08, 0.0), (0.15, 0.60, 0.05), (0.55, 0.95, 0.20), (0.90, 1.0, 0.60)], density=14.0, emission=4.0, light=(0.5, 1.0, 0.2))),
+    "frost": dict(top=(0.08, 0.17, 0.30), side=(0.25, 0.45, 0.70), belly=(0.80, 0.90, 0.97), grout=(0.02, 0.05, 0.10),
+                  glow=0.25, glow_color=(0.3, 0.7, 1.0), rough_plate=0.22, rough_grout=0.7, tint=0.25, mottle=0.25,
+                  horn_root=(0.30, 0.45, 0.55), horn_mid=(0.55, 0.75, 0.88), horn_tip=(0.90, 0.97, 1.0), eye=(0.4, 0.9, 1.0),
+                  mouth=(0.55, 0.30, 0.40), tooth=(0.95, 0.98, 1.0), eye_glow=1.6,
+                  lights=dict(Key=(0.85, 0.92, 1.0), Rim=(0.6, 0.8, 1.0)),
+                  grade=dict(lift=(0.0, 0.01, 0.03), gamma=(1.0, 1.0, 1.02), gain=(0.90, 1.0, 1.10), saturation=0.95, contrast=0.05),
+                  breath=dict(ramp=[(0.10, 0.25, 0.40), (0.40, 0.75, 1.0), (0.80, 0.95, 1.0), (1.0, 1.0, 1.0)], density=12.0, emission=3.0, light=(0.5, 0.8, 1.0))),
+    "obsidian": dict(top=(0.006, 0.006, 0.008), side=(0.02, 0.02, 0.03), belly=(0.10, 0.06, 0.04), grout=(0.30, 0.10, 0.02),
+                     glow=0.80, glow_color=(1.0, 0.35, 0.05), rough_plate=0.22, rough_grout=0.7, tint=0.20, mottle=0.20,
+                     horn_root=(0.02, 0.02, 0.02), horn_mid=(0.08, 0.05, 0.04), horn_tip=(0.50, 0.35, 0.15), eye=(1.0, 0.85, 0.2),
+                     mouth=(0.20, 0.03, 0.035), tooth=(0.20, 0.18, 0.16), eye_glow=1.6,
+                     lights=dict(Key=(1.0, 0.90, 0.80), Rim=(1.0, 0.45, 0.20)),
+                     grade=dict(lift=(0.0, 0.0, 0.0), gamma=(1.0, 0.98, 0.95), gain=(1.12, 1.0, 0.92), saturation=1.10, contrast=0.15),
+                     breath=dict(ramp=[(0.10, 0.0, 0.0), (0.90, 0.12, 0.0), (1.0, 0.50, 0.05), (1.0, 0.85, 0.40)], density=22.0, emission=9.0, light=(1.0, 0.35, 0.05))),
+}
 
 
 # ----------------------------------------------------------------------------- Mirror modifier

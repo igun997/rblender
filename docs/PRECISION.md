@@ -230,6 +230,51 @@ about 12, so it is not an exact copy; the eye is small; the mouth interior is th
 palate; the volume breath is a render effect, not geometry, so it does not export to glTF; the eyelid edge is a face
 cut, not a smooth boundary.
 
+## Rig and fire breath (`characters/dragon_fire.py`)
+
+The model stops at the skull, so a neck is added (a tube through five control points that sinks below the floor: the
+dragon rises out of a pit; a first version ended in a ball and read as a lollipop). The rig has 12 bones: root, neck1
+to 4, head, jaw, tongue1 to 3, eye.R and eye.L. Every bone's local X is world X (`align_roll`), so a rotation about X is
+a pitch; the signs are not assumed but measured (jaw +30 deg lowers the lower teeth by 23 cm, head raise 30 deg lifts the
+nose by 54 cm). **Skin weights are computed, not painted**: the skull blends head to neck over its back 0.3 m, the
+jaw and lower teeth follow the jaw, spikes follow whichever of skull or jaw is nearer, the tongue blends along its
+length and joins the jaw at its root, the neck blends along its centre line. 0 vertices are left without weight.
+
+Things that bit me, each found by looking at a render:
+
+- **A procedural texture on a deformed mesh swims.** The Object coordinate follows the deformed vertex, so the scales
+  slide over the skin when the head pitches. `prec.add_rest_attribute()` stores the rest position as a colour attribute
+  and every material reads it (`orco="rest"`); a Mirror modifier copies it, so the pattern stays symmetric.
+- **Parenting to a bone parents to its tail.** The flame cone sat 0.25 m (the bone length) in front of the mouth, a
+  visible gap. The parent-inverse must come from the parent matrix Blender really uses, not from the bone's head matrix.
+- **A light inside a volume scatters into a bright dot**: `light.volume_factor = 0`.
+- **A world volume (haze) broke the picture**: a bright panel appeared and the flame faded. Removed; the glare in the
+  compositor gives the bloom instead.
+- The first fire frame clipped to flat yellow. A yellow strip appeared in the flame in one test frame; I assumed it was
+  the particle emitter plane, made the plane tiny, and it did not appear in the later preview (not proven to be the cause).
+  `ParticleSettings.use_render_emitter` does not exist in 4.5.
+
+The fire is `prec.breath_volume` with three animated controls (Intensity, Front, Flow, the last driven by `frame`), a
+point light with flicker, and 500 ember particles. The head rears back with a faint glow in the mouth, snaps forward,
+the jet advances along the cone, the body shakes (noise modifiers on the F-curves), and the eyes flare. Camera moves are
+keyed on a tracking target with a handheld shake. The soundtrack is synthesised with numpy (rumble, inhale, a roar with
+a falling pitch, a fire roar that follows the intensity curve, crackle) and muxed with ffmpeg.
+
+EEVEE Next was used for speed: about 4 s a frame at 640 x 360 and 12 samples, 14 to 48 s at 1280 x 720 and 16 to 32
+samples, all on 4 vCPU. I did not time Cycles on this scene.
+
+Result: 168 frames at 1280 x 720 and 16 samples took 4720 s (79 min, about 28 s a frame) on 4 vCPU; the mp4 is 7.0 s
+with an AAC track. The rigged export (`--export`) reads back in a fresh Blender as 19 skinned meshes, 12 bones and one
+action of frames 1 to 169 (`scenes/check_glb.py`); the glb animation is baked per frame, so the noise shake survives.
+Lessons about the workflow, not the model:
+
+- **A long `rblender run` can lose its client.** After 37 minutes the local command returned with no output while
+  Blender was still rendering on the box (htop showed it at about 80% on all four cores); the next rcargo command
+  queued behind the remote lock for about 40 minutes. A numbered JPEG sequence made the result recoverable: nothing was
+  lost, `rblender pull` fetched all 168 frames once the render finished.
+- **Render to a sequence, encode afterwards.** The audio gain (`loudnorm`, a limiter) could be fixed without
+  re-rendering: the first encode peaked at 0 dB.
+
 ## Using it from an agent
 
 ```python

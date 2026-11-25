@@ -1,0 +1,10 @@
+-- rig
+  [ ok ] vertices without a skin weight                 measured          0     target          0  err        0  tol 0
+  [ ok ] bones                                          measured         12     target         12  err        0  tol 0
+  [ ok ] 30 degrees of jaw lowers the lower teeth (cm)  measured     22.982     target     >= 5.0  err           tol 
+  [ ok ] 30 degrees of raise lifts the nose (cm)        measured     58.001     target    >= 10.0  err           tol 
+  [ ok ] armature modifier after the mirror on every skinned mesh measured                target             err           tol 
+-- animation
+  [ ok ] pose keys on every bone                        measured  39 curves     target             err           tol 
+  [ ok ] fire intensity, front, light and eye glow are keyed measured                target             err           tol 
+7/7 checks pass

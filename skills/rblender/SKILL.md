@@ -39,7 +39,7 @@ Everything written through `rb.out("name.ext")` lands in remote `out/` and is pu
 
 1. Write or edit the script, `rblender run ...`, fix Python errors from the traceback.
 2. Look at renders (read the PNGs) and run `rblender verify out --skin --anim` before claiming success.
-3. Long renders: use `--quick`-style options in your script, then the full run.
+3. Long renders: use `--quick`-style options in your script, then the full run. Render a numbered image sequence and encode afterwards (ffmpeg): a `rblender run` client can disconnect after about 40 minutes while Blender keeps rendering on the box; other rcargo commands then queue behind the remote lock, and `rblender pull` fetches the frames when it ends.
 
 ## When something is missing
 
@@ -63,5 +63,5 @@ For anything where proportions matter, do not eyeball renders. `import prec` (sh
 8. **Report**: `prec.Report` prints a pass/fail table; fail loudly, report the real numbers, never loosen a limit after seeing the result.
 9. **Bake**: high-poly (voxel remesh + displacement) onto the low-poly UVs with `prec.bake_pass`, then `prec.pbr_material`. Check the glb with `rblender verify out --pbr`.
 
-Worked examples: `characters/dragon_head.py` (`rblender run characters/dragon_head.py -- --quick`) and `characters/dragon_ref3d.py` (3D target, see `docs/PRECISION.md`).
-Gotchas: set `image.colorspace_settings.name` BEFORE `pixels.foreach_set`; brush radius must exceed local vertex spacing; a triangulated quad mesh is not mirror-symmetric as a surface; a tube whose rings follow a sloping path bloats the silhouette (`prec.tube(axis=...)`); an interpolating Kelvinlet solve follows noisy targets (`prec.solve_stable`, median handles).
+Worked examples: `characters/dragon_head.py` (`rblender run characters/dragon_head.py -- --quick`), `characters/dragon_ref3d.py` (3D target) and `characters/dragon_fire.py` (rig, animation, fire, video), see `docs/PRECISION.md`.
+Gotchas: set `image.colorspace_settings.name` BEFORE `pixels.foreach_set`; brush radius must exceed local vertex spacing; a triangulated quad mesh is not mirror-symmetric as a surface; a tube whose rings follow a sloping path bloats the silhouette (`prec.tube(axis=...)`); an interpolating Kelvinlet solve follows noisy targets (`prec.solve_stable`, median handles). Rigging: compute skin weights in code and make bone local X = world X (`align_roll`) so pitch is a rotation about X, but measure the sign; a procedural texture on a deformed mesh swims unless it reads a stored rest position (`prec.add_rest_attribute`, `orco="rest"`); Blender parents to a bone's TAIL, so take the parent-inverse from the real parent matrix; a light inside a volume needs `volume_factor = 0`; a world volume can break an EEVEE volume shot.
